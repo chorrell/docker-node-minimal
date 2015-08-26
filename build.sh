@@ -1,29 +1,88 @@
 #!/usr/bin/env bash
 
-VERSION=0.12.7
-ROOTFSDIR=/var/tmp/rootfs
-TAG=
-DIR=
+set -euo pipefail
+IFS=$'\n\t'
 
+usage() {
+cat <<EOF
+
+Create a minimal Docker Node.js image for a given version of Node.js.
+
+Usage:
+  $0 -v <VERVSION>
+
+Example:
+  $0 -v 0.12.7
+
+OPTIONS:
+  -v The desired version of Node.js (e.g 0.12.7)
+  -h Show this message
+
+EOF
+}
+
+VERSION=
+TAG=
+ROOTFSDIR=/var/tmp/rootfs
+
+while getopts "hv:" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit
+      ;;
+    v)
+      VERSION=${OPTARG}
+      ;;
+    \?)
+      usage
+      exit
+      ;;
+  esac
+done
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+if [[ -z ${VERSION} ]]; then
+  echo "Error: missing version (-v) value"
+  exit 1
+fi
+
+if [[ -d $ROOTFSDIR ]]; then
+  echo "Found previous rootfs directory. Deleting and creating a new one."
+  
+  rm -rf $ROOTFSDIR
+  mkdir -p $ROOTFSDIR
+  mkdir -p $ROOTFSDIR/bin
+fi
+
+echo "Getting version $VERSION of Node.js..."
 curl -Os https://nodejs.org/dist/v$VERSION/node-v$VERSION.tar.gz
 tar -zxvf node-v$VERSION.tar.gz
 pushd $PWD
 cd node-v$VERSION/
+
+echo "Statically compiling Node.js v$VERSION"
 ./configure --fully-static
 make
 
-mkdir $ROOTFSDIR
-mkdir $ROOTFSDIR/bin
 cp out/Release/node $ROOTFSDIR/bin/
 
-
+echo "Creating rootfs tarball"
 tar --numeric-owner --create --auto-compress --file "rootfs.tar.xz" --directory "$ROOTFSDIR" --transform='s,^./,,' .
 
-
+echo "Creating Dockerfile"
 cat > Dockerfile <<EOF
 FROM scratch
 MAINTAINER image-team@joyent.com
 ADD rootfs.tar.xz /
 ENTRYPOINT ["/bin/node"]
 EOF
-docker build -t $TAG $DIR
+
+echo "Cleaning up"
+rm -rf node-v$VERSION.tar.gz
+rm -rf node-v$VERSION/
