@@ -81,7 +81,7 @@ popd
 echo "Creating Dockerfile"
 cat > Dockerfile <<EOF
 FROM scratch
-MAINTAINER image-team@joyent.com
+MAINTAINER christopher@horrell.ca
 ADD rootfs.tar.xz /
 ENTRYPOINT ["/bin/node"]
 EOF
