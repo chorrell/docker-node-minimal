@@ -56,9 +56,10 @@ if [[ -d $ROOTFSDIR ]]; then
   echo "Found previous rootfs directory. Deleting and creating a new one."
   
   rm -rf $ROOTFSDIR
-  mkdir -p $ROOTFSDIR
-  mkdir -p $ROOTFSDIR/bin
 fi
+
+mkdir -p $ROOTFSDIR
+mkdir -p $ROOTFSDIR/bin
 
 echo "Getting version $VERSION of Node.js..."
 curl -Os https://nodejs.org/dist/v$VERSION/node-v$VERSION.tar.gz
