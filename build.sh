@@ -76,6 +76,8 @@ cp out/Release/node $ROOTFSDIR/bin/
 echo "Creating rootfs tarball"
 tar --numeric-owner --create --auto-compress --file "rootfs.tar.xz" --directory "$ROOTFSDIR" --transform='s,^./,,' .
 
+popd
+
 echo "Creating Dockerfile"
 cat > Dockerfile <<EOF
 FROM scratch
