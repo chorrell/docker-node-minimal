@@ -62,8 +62,8 @@ mkdir -p $ROOTFSDIR
 mkdir -p $ROOTFSDIR/bin
 
 echo "Getting version $VERSION of Node.js..."
-curl -Os https://nodejs.org/dist/v$VERSION/node-v$VERSION.tar.gz
-tar -zxvf node-v$VERSION.tar.gz
+curl -Os https://nodejs.org/dist/v$VERSION/node-v$VERSION.tar.xz
+tar -Jxvf node-v$VERSION.tar.xz
 pushd $PWD
 cd node-v$VERSION/
 
@@ -87,5 +87,5 @@ ENTRYPOINT ["/bin/node"]
 EOF
 
 echo "Cleaning up"
-rm -rf node-v$VERSION.tar.gz
+rm -rf node-v$VERSION.tar.xz
 rm -rf node-v$VERSION/
