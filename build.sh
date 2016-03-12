@@ -63,7 +63,7 @@ mkdir -p $ROOTFSDIR/bin
 
 echo "Getting version $VERSION of Node.js..."
 curl -Os https://nodejs.org/dist/v$VERSION/node-v$VERSION.tar.xz
-tar -Jxvf node-v$VERSION.tar.xz
+tar -Jxf node-v$VERSION.tar.xz
 pushd $PWD
 cd node-v$VERSION/
 
