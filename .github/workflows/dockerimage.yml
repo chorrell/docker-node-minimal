@@ -10,5 +10,9 @@ jobs:
  
     steps:
     - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag node-minimal:$(date +%s)
+    - name: Build Node
+      run: |
+        cd 8
+        docker build . --file Dockerfile --tag node-minimal:8
+    - name: Test Node
+      run: docker run --rm node-minimal:8 -e "console.log('Hello from Node.js ' + process.version)"
