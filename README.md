@@ -1,5 +1,5 @@
 # docker-node-minimal
 
-![GitHub actons status](https://github.com/actions/hello-world/workflows/Greet%20Everyone/badge.svg)
+![GitHub Actons status](https://github.com/chorrell/docker-node-minimal/workflows/Main%20workflow/badge.svg)
 
 A minimal Docker image with just Node.js
