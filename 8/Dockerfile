@@ -4,7 +4,6 @@ ENV NODE_VERSION 8.16.1
 
 RUN set -ex \
     && apt-get -y update \
-    && apt-get -y upgrade \
     && apt-get -y install glibc-source \
     && for key in \
         94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
