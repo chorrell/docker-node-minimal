@@ -1,10 +1,11 @@
 FROM buildpack-deps:focal as builder
 
-ENV NODE_VERSION 8.16.1
+ENV NODE_VERSION 12.18.0
 
 RUN set -ex \
-    && apt-get -y update \
-    && apt-get -y install ccache glibc-source \
+    && apt-get -qq update \
+    && apt-get -qq install \
+        ccache glibc-source \
     && /usr/sbin/update-ccache-symlinks \
     && export PATH="/usr/lib/ccache:$PATH" \
     && for key in \
