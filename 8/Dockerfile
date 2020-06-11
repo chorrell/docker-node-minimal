@@ -1,4 +1,4 @@
-FROM buildpack-deps:bionic as builder
+FROM buildpack-deps:focal as builder
 
 ENV NODE_VERSION 8.16.1
 
