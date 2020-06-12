@@ -1,10 +1,11 @@
-FROM buildpack-deps:bionic as builder
+FROM buildpack-deps:focal as builder
 
-ENV NODE_VERSION 8.16.1
+ENV NODE_VERSION 14.4.0
 
 RUN set -ex \
-    && apt-get -y update \
-    && apt-get -y install glibc-source \
+    && apt-get -qq update \
+    && apt-get -qq install \
+        glibc-source \
     && for key in \
         94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
         FD3A5288F042B6850C66B31F09FE44734EB7990E \
@@ -28,7 +29,7 @@ RUN set -ex \
     && grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
     && tar -Jxf "node-v$NODE_VERSION.tar.xz" \
     && cd "node-v$NODE_VERSION/"\
-    && ./configure --fully-static --without-npm \
+    && ./configure --fully-static --without-npm --without-intl \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && mv out/Release/node /var/tmp/node
 

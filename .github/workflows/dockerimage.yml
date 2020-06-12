@@ -2,17 +2,23 @@ name: Docker Image CI
 
 on: [push]
 
+env:
+  NAME: node-minimal
+
 jobs:
 
   build:
  
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node_version: [12, 14]
  
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Build Node
       run: |
-        cd 8
-        docker build . --file Dockerfile --tag node-minimal:8
+        cd ${{ matrix.node_version }}
+        docker build . --file Dockerfile --tag $NAME:${{ matrix.node_version }}
     - name: Test Node
-      run: docker run --rm node-minimal:8 -e "console.log('Hello from Node.js ' + process.version)"
+      run: docker run --rm $NAME:${{ matrix.node_version }} -e "console.log('Hello from Node.js ' + process.version)"
