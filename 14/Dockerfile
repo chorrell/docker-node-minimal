@@ -5,9 +5,7 @@ ENV NODE_VERSION 14.4.0
 RUN set -ex \
     && apt-get -qq update \
     && apt-get -qq install \
-        ccache glibc-source \
-    && /usr/sbin/update-ccache-symlinks \
-    && export PATH="/usr/lib/ccache:$PATH" \
+        glibc-source \
     && for key in \
         94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
         FD3A5288F042B6850C66B31F09FE44734EB7990E \
@@ -33,7 +31,6 @@ RUN set -ex \
     && cd "node-v$NODE_VERSION/"\
     && ./configure --fully-static --without-npm --without-intl \
     && make -j$(getconf _NPROCESSORS_ONLN) \
-    && ccache -s \
     && mv out/Release/node /var/tmp/node
 
 FROM scratch
