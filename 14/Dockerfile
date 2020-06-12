@@ -1,6 +1,6 @@
 FROM buildpack-deps:focal as builder
 
-ENV NODE_VERSION 8.16.1
+ENV NODE_VERSION 14.4.0
 
 RUN set -ex \
     && apt-get -qq update \
