@@ -78,7 +78,11 @@ jobs:
       - name: Build image
         run: |
           cp node-${{ env.NODE_VERSION }}/node .
+          chmod +x node
           docker build . --file Dockerfile --tag $IMAGE_NAME
+
+      - name: Test Image
+        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
 
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
