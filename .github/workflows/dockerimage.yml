@@ -79,17 +79,17 @@ jobs:
         run: |
           cp node-${{ env.NODE_VERSION }}/node .
           chmod +x node
-          docker build . --file Dockerfile --tag $IMAGE_NAME
+          docker build . --file Dockerfile --tag ${{ env.IMAGE_NAME }}
 
       - name: Test Image
-        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm ${{ env.IMAGE_NAME }} -e "console.log('Hello from Node.js ' + process.version)"
 
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
       - name: Push image
         run: |
-          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/${{ env.IMAGE_NAME }}
           
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
@@ -106,5 +106,5 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker tag ${{ env.IMAGE_NAME }} $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
