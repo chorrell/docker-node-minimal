@@ -53,7 +53,7 @@ jobs:
       run: docker run --rm $IMAGE_NAME:$NODE_VERSION -e "console.log('Hello from Node.js ' + process.version)"
 
     - name: Upload node
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2.0.1
       with:
         name: node-${{ env.NODE_VERSION }}
         path: node
