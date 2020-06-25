@@ -18,45 +18,43 @@ env:
   NODE_VERSION: "12.18.0"
 
 jobs:
-
   build:
- 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install ccache
-      run: |
-        sudo apt-get -qq update
-        sudo apt-get -qq install ccache
-        sudo /usr/sbin/update-ccache-symlinks
+      - name: Install ccache
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install ccache
+          sudo /usr/sbin/update-ccache-symlinks
 
-    - name: Restore Cache
-      uses: actions/cache@v2
-      with:
-        path: ~/.ccache
-        key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-ccache
+      - name: Restore Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-ccache
 
-    - name: Build Node
-      run: |
-        export PATH="/usr/lib/ccache:$PATH"
-        which gcc
-        ./build.sh -n $NODE_VERSION
-        ccache -s
-        cp node-v$NODE_VERSION/out/Release/node node
+      - name: Build Node
+        run: |
+          export PATH="/usr/lib/ccache:$PATH"
+          which gcc
+          ./build.sh -n $NODE_VERSION
+          ccache -s
+          cp node-v$NODE_VERSION/out/Release/node node
 
-    - name: Build image
-      run: docker build . --file Dockerfile --tag $IMAGE_NAME:$NODE_VERSION
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME:$NODE_VERSION
 
-    - name: Test Image
-      run: docker run --rm $IMAGE_NAME:$NODE_VERSION -e "console.log('Hello from Node.js ' + process.version)"
+      - name: Test Image
+        run: docker run --rm $IMAGE_NAME:$NODE_VERSION -e "console.log('Hello from Node.js ' + process.version)"
 
-    - name: Upload node
-      uses: actions/upload-artifact@v2.0.1
-      with:
-        name: node-${{ env.NODE_VERSION }}
-        path: node
+      - name: Upload node
+        uses: actions/upload-artifact@v2.0.1
+        with:
+          name: node-${{ env.NODE_VERSION }}
+          path: node
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
@@ -90,7 +88,7 @@ jobs:
       - name: Push image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
-          
+
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
