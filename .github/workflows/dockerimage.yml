@@ -44,17 +44,20 @@ jobs:
           ccache -s
           cp node-v$NODE_VERSION/out/Release/node node
 
-      - name: Build image
+      - name: Build Image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME:$NODE_VERSION
 
       - name: Test Image
         run: docker run --rm $IMAGE_NAME:$NODE_VERSION -e "console.log('Hello from Node.js ' + process.version)"
 
-      - name: Upload node
+      - name: Export Image
+        run: docker save $IMAGE_NAME:$NODE_VERSION > $IMAGE_NAME-$NODE_VERSION.tar
+
+      - name: Upload Image
         uses: actions/upload-artifact@v2.0.1
         with:
-          name: node-${{ env.NODE_VERSION }}
-          path: node
+          name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
+          path: $IMAGE_NAME-$NODE_VERSION.tar
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
@@ -68,24 +71,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download node
+      - name: Download Image
         uses: actions/download-artifact@v2
         with:
-          name: node-${{ env.NODE_VERSION }}
+          name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
-      - name: Build image
-        run: |
-          cp node .
-          chmod +x node
-          docker build . --file Dockerfile --tag $IMAGE_NAME
-
-      - name: Test Image
-        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
+      - name: Import Image
+        run: docker load < $IMAGE_NAME-$NODE_VERSION.tar
 
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
-      - name: Push image
+      - name: Push Image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
 
