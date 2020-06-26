@@ -45,19 +45,19 @@ jobs:
           cp node-v$NODE_VERSION/out/Release/node node
 
       - name: Build Image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME:$NODE_VERSION
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME
 
       - name: Test Image
-        run: docker run --rm $IMAGE_NAME:$NODE_VERSION -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
 
       - name: Export Image
-        run: docker save $IMAGE_NAME:$NODE_VERSION > $IMAGE_NAME-$NODE_VERSION.tar
+        run: docker save $IMAGE_NAME > $IMAGE_NAME.tar
 
       - name: Upload Image
         uses: actions/upload-artifact@v2.0.1
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
-          path: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}.tar
+          path: ${{ env.IMAGE_NAME }}.tar
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
@@ -77,7 +77,7 @@ jobs:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
       - name: Import Image
-        run: docker load < $IMAGE_NAME-$NODE_VERSION.tar
+        run: docker load < $IMAGE_NAME.tar
 
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
