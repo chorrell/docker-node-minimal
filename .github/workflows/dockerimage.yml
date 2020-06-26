@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v2.0.1
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
-          path: $IMAGE_NAME-$NODE_VERSION.tar
+          path: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}.tar
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
