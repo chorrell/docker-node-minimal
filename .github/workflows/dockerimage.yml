@@ -75,7 +75,6 @@ jobs:
 
       - name: Build image
         run: |
-          cp node .
           chmod +x node
           docker build . --file Dockerfile --tag $IMAGE_NAME
 
