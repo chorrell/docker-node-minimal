@@ -8,7 +8,7 @@ A minimal Docker image with just Node.js.
 
 This image is published to the GitHub Container Registry:
 
-[https://github.com/users/chorrell/packages/container/node-minimal/]
+<https://github.com/users/chorrell/packages/container/node-minimal/>
 
 To pull a specific version of the node-minimal image:
 
