@@ -6,8 +6,12 @@ A minimal Docker image with just Node.js.
 
 ## Use the GitHub Container Image
 
-The lateset version of this image is published to the GitHub Container Registry:
+This image is published to the GitHub Container Registry:
+
+[https://github.com/users/chorrell/packages/container/node-minimal/]
+
+To pull a specific version of the node-minimal image:
 
 ```sh
-docker pull ghcr.io/chorrell/node-minimal:latest
+docker pull ghcr.io/chorrell/node-minimal:12.18.3
 ```
