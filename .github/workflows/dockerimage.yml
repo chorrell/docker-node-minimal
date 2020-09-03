@@ -83,7 +83,7 @@ jobs:
 
       - name: Push Image
         run: |
-          IMAGE_ID=ghcr.io/$IMAGE_NAME
+          IMAGE_ID=ghcr.io/$GITHUB_ACTOR/$IMAGE_NAME
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
