@@ -15,7 +15,7 @@ on:
 
 env:
   IMAGE_NAME: node-minimal
-  NODE_VERSION: "12.18.1"
+  NODE_VERSION: "12.18.2"
 
 jobs:
   build:
