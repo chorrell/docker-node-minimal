@@ -12,6 +12,7 @@ on:
 env:
   IMAGE_NAME: node-minimal
   NODE_VERSION: "12.18.3"
+  MAJOR_VERSION: 12
 
 jobs:
   build:
@@ -93,5 +94,8 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
+          docker tag $IMAGE_NAME $IMAGE_ID:$MAJOR_VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+
+          docker push $IMAGE_ID:$MAJOR_VERSION
           docker push $IMAGE_ID:$VERSION
