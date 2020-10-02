@@ -55,6 +55,7 @@ jobs:
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
           path: ${{ env.IMAGE_NAME }}.tar
+          retention-days: 7
 
   # Push image to GitHub Container Registry.
   push:
