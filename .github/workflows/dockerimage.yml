@@ -51,7 +51,7 @@ jobs:
         run: docker save $IMAGE_NAME > $IMAGE_NAME.tar
 
       - name: Upload Image
-        uses: actions/upload-artifact@v2.2.1
+        uses: actions/upload-artifact@v2.2.2
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
           path: ${{ env.IMAGE_NAME }}.tar
