@@ -31,7 +31,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-ccache
+          key: ${{ runner.os }}-node-${{ env.MAJOR_VERSION }}-ccache
 
       - name: Build Node
         run: |
