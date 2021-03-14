@@ -26,6 +26,10 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -qq install ccache
           sudo /usr/sbin/update-ccache-symlinks
+          echo "compression = true" >> ~/.ccache.conf
+          echo "compression_level = 9" >> ~/.ccache.conf
+          echo "log_file = /tmp/ccache.log" >> ~/.ccache.conf
+
 
       - name: Restore Cache
         uses: actions/cache@v2
