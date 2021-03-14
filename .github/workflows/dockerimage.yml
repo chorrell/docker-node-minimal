@@ -21,25 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install ccache
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install ccache
-          sudo /usr/sbin/update-ccache-symlinks
-          echo "compression = true" >> ~/.ccache.conf
-          echo "compression_level = 9" >> ~/.ccache.conf
-          echo "log_file = /tmp/ccache.log" >> ~/.ccache.conf
-
-
-      - name: Restore Cache
-        uses: actions/cache@v2
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1
         with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-node-${{ env.MAJOR_VERSION }}-ccache
+          key: ${{ env.MAJOR_VERSION }}
 
       - name: Build Node
         run: |
-          export PATH="/usr/lib/ccache:$PATH"
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           which gcc
           ./build.sh -n $NODE_VERSION
           ccache -s
