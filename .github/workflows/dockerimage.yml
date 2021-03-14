@@ -28,7 +28,7 @@ jobs:
           sudo /usr/sbin/update-ccache-symlinks
 
       - name: Restore Cache
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-ccache
@@ -51,7 +51,7 @@ jobs:
         run: docker save $IMAGE_NAME > $IMAGE_NAME.tar
 
       - name: Upload Image
-        uses: actions/upload-artifact@v2.2.2
+        uses: actions/upload-artifact@v2
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
           path: ${{ env.IMAGE_NAME }}.tar
