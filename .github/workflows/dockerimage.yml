@@ -57,6 +57,8 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
+      - uses: actions/checkout@v2
+      
       - name: Download built node
         uses: actions/download-artifact@v2
         with:
