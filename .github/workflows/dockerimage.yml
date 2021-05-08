@@ -47,7 +47,6 @@ jobs:
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
           path: node
-          retention-days: 7
 
   push:
     # Ensure test job passes before pushing image.
