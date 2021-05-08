@@ -9,8 +9,8 @@ on:
 
 env:
   IMAGE_NAME: node-minimal
-  NODE_VERSION: "14.16.0"
-  MAJOR_VERSION: 14
+  NODE_VERSION: "16.1.0"
+  MAJOR_VERSION: 16
 
 jobs:
   build:
