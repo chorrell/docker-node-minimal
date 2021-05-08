@@ -35,7 +35,11 @@ jobs:
           cp node-v$NODE_VERSION/out/Release/node node
 
       - name: Build Image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}
 
       - name: Test Image
         run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
