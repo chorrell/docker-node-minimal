@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -53,10 +53,12 @@ jobs:
     # Ensure test job passes before pushing image.
     needs: build
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
     steps:
+      - uses: actions/checkout@v2
+      
       - name: Download built node
         uses: actions/download-artifact@v2
         with:
