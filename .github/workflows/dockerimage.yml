@@ -3,9 +3,17 @@ name: Docker Image CI
 on:
   push:
     branches:
-    - main
+      - main
+    paths:
+      - "Dockerfile"
+      - "build.sh"
+      - ".github/workflows/dockerimage.yml"
 
   pull_request:
+    paths:
+      - "Dockerfile"
+      - "build.sh"
+      - ".github/workflows/dockerimage.yml"
 
 env:
   IMAGE_NAME: node-minimal
