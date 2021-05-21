@@ -9,7 +9,7 @@ Usage: $0 -n NODE_VERSION
     -n <NODE_VERSION> (Required)
     -h help
 Example:
-    $0 -n 12.18.0
+    $0 -n 16.2.0
 USAGE
     exit 1
 }
