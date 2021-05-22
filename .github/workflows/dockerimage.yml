@@ -86,7 +86,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          flavor: true
+          flavor: latest=true
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}, ghcr.io/chorrell/${{ env.IMAGE_NAME }}
           tags: |
             current
