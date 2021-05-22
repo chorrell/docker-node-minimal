@@ -50,10 +50,10 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
       - name: Test Image
-        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
 
       - name: Upload Image
         uses: actions/upload-artifact@v2
@@ -95,17 +95,27 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
+      - name: Set tags
+        run: |
+          echo DOCKERHUB=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }} >> $GITHUB_ENV
+          echo GHCR=ghcr.io/chorrell/${{ env.IMAGE_NAME }} >> $GITHUB_ENV
+
+      - name: Show tags
+        run: |
+          echo $DOCKERHUB
+          echo $GHCR
+
       - name: Build Image
         uses: docker/build-push-action@v2.4.0
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:current
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.MAJOR_VERSION }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.NODE_VERSION }}
-            ghcr.io/chorrell/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/chorrell/${{ env.IMAGE_NAME }}:current
-            ghcr.io/chorrell/${{ env.IMAGE_NAME }}:${{ env.MAJOR_VERSION }}
-            ghcr.io/chorrell/${{ env.IMAGE_NAME }}:${{ env.NODE_VERSION }}
+            ${{ env.DOCKERHUB }}:latest
+            ${{ env.DOCKERHUB }}:current
+            ${{ env.DOCKERHUB }}:${{ env.MAJOR_VERSION }}
+            ${{ env.DOCKERHUB }}:${{ env.NODE_VERSION }}
+            ${{ env.GHCR }}:latest
+            ${{ env.GHCR }}:current
+            ${{ env.GHCR }}:${{ env.MAJOR_VERSION }}
+            ${{ env.GHCR }}:${{ env.NODE_VERSION }}
