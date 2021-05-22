@@ -18,7 +18,6 @@ on:
 env:
   IMAGE_NAME: node-minimal
   NODE_VERSION: "16.2.0"
-  MAJOR_VERSION: 16
 
 jobs:
   build:
@@ -26,6 +25,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2.3.4
+
+      - name: Set MAJOR_VERSION
+        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+
+      - name: Show MAJOR_VERSION
+        run: echo $MAJOR_VERSION
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.0.4
@@ -65,7 +70,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2.3.4
-      
+
+      - name: Set MAJOR_VERSION
+        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+
+      - name: Show MAJOR_VERSION
+        run: echo $MAJOR_VERSION
+
       - name: Download built node
         uses: actions/download-artifact@v2
         with:
