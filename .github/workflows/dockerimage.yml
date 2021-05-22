@@ -50,10 +50,10 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
       - name: Test Image
-        run: docker run --rm $IMAGE_NAME -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
 
       - name: Upload Image
         uses: actions/upload-artifact@v2
