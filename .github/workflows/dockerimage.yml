@@ -46,7 +46,7 @@ jobs:
           cp node-v$NODE_VERSION/out/Release/node node
 
       - name: Build Image
-        uses: docker/build-push-action@v2.4.0
+        uses: docker/build-push-action@v2.5.0
         with:
           context: .
           load: true
@@ -107,7 +107,7 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build Image
-        uses: docker/build-push-action@v2.4.0
+        uses: docker/build-push-action@v2.5.0
         with:
           context: .
           push: true
