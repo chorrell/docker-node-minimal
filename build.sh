@@ -40,9 +40,7 @@ NODE_KEYS=$(curl -fsSLo- --compressed https://github.com/nodejs/node/raw/master/
 
 for key in $NODE_KEYS; do
     if [[ -n "$key" ]]; then
-        gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-        gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-        gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ;
+        gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key"
     fi
 done
 
