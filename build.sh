@@ -38,11 +38,12 @@ fi
 
 NODE_KEYS=$(curl -fsSLo- --compressed https://github.com/nodejs/node/raw/master/README.md | awk '/^gpg --keyserver pool.sks-keyservers.net --recv-keys/ {print $NF}')
 
-for key in $NODE_KEYS \
-; do \
-    gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-    gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-    gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
+for key in $NODE_KEYS; do
+    if [[ -n "$key" ]]; then
+        gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
+        gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
+        gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ;
+    fi
 done
 
 curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz"
@@ -52,4 +53,4 @@ grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -
 tar -Jxf "node-v$NODE_VERSION.tar.xz"
 cd "node-v$NODE_VERSION/"
 ./configure --fully-static --without-npm --without-intl
-make -j$(getconf _NPROCESSORS_ONLN)
+make -j"$(getconf _NPROCESSORS_ONLN)"
