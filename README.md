@@ -13,7 +13,7 @@ This image is published to the GitHub Container Registry:
 To pull a specific version of the node-minimal image:
 
 ```sh
-docker pull chorrell/node-minimal:16.2.0
+docker pull chorrell/node-minimal:16.4.0
 ```
 
 ## Use the GitHub Container Image
