@@ -51,5 +51,5 @@ gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
 grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -
 tar -Jxf "node-v$NODE_VERSION.tar.xz"
 cd "node-v$NODE_VERSION/"
-./configure --fully-static --enable-static --without-npm --without-intl
+./configure --fully-static --enable-static --without-npm --without-intl --verbose
 make -j"$(getconf _NPROCESSORS_ONLN)"
