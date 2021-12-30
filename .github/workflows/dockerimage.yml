@@ -28,11 +28,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install g++ 11
-        run: |
-          sudo apt-get update
-          sudo apt-get install g++-11 -y
-
       - name: Set MAJOR_VERSION
         run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
 
