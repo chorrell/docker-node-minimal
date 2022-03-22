@@ -30,8 +30,8 @@ jobs:
 
       - name: Install build tools
         run: |
-          sudo apt-get update
-          sudo apt-get install g++ make python3
+          sudo apt-get -qq update
+          sudo apt-get -qq install g++ make python3
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1

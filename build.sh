@@ -52,4 +52,8 @@ grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -
 tar -Jxf "node-v$NODE_VERSION.tar.xz"
 cd "node-v$NODE_VERSION/"
 ./configure --fully-static --enable-static --without-npm --without-intl
+# See: https://github.com/nodejs/node/issues/41497#issuecomment-1013137433
+for i in out/tools/v8_gypfiles/gen-regexp-special-case.target.mk out/test_crypto_engine.target.mk; do 
+    sed -i 's/\-static//g' $i || echo "nevermind";
+done
 make -j"$(getconf _NPROCESSORS_ONLN)"
