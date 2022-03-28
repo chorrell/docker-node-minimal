@@ -20,7 +20,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1
 
       - name: Set MAJOR_VERSION
         run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
@@ -32,11 +36,6 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq install g++ make python3
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: ${{ env.MAJOR_VERSION }}
 
       - name: Build Node
         run: |
@@ -70,7 +69,8 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Set MAJOR_VERSION
         run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
