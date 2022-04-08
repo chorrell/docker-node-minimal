@@ -79,7 +79,7 @@ jobs:
         run: echo $MAJOR_VERSION
 
       - name: Download built node
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
