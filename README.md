@@ -20,7 +20,7 @@ docker pull chorrell/node-minimal:latest
 
 This image is published to the GitHub Container Registry:
 
-<https://github.com/users/chorrell/packages/container/node-minimal/>
+<https://github.com/chorrell/docker-node-minimal/pkgs/container/node-minimal>
 
 To pull a specific version of the node-minimal image:
 
