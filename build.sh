@@ -36,7 +36,7 @@ if [[ -z ${NODE_VERSION} ]]; then
   usage
 fi
 
-NODE_KEYS=$(curl -fsSLo- --compressed https://github.com/nodejs/node/raw/master/README.md | awk '/^gpg --keyserver hkps:\/\/keys\.openpgp\.org --recv-keys/ {print $NF}')
+NODE_KEYS=$(curl -fsSLo- --compressed https://github.com/nodejs/node/raw/main/README.md | awk '/^gpg --keyserver hkps:\/\/keys\.openpgp\.org --recv-keys/ {print $NF}')
 
 for key in $NODE_KEYS; do
   if [[ -n "$key" ]]; then
