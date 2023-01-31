@@ -48,7 +48,7 @@ done
 curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz"
 curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.sig"
 curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt"
-https://github.com/nodejs/node/blob/main/README.md#verifying-binaries
+# See: https://github.com/nodejs/node/blob/main/README.md#verifying-binaries
 gpg --verify SHASUMS256.txt.sig SHASUMS256.txt
 grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -
 tar -Jxf "node-v$NODE_VERSION.tar.xz"
