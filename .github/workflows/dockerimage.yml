@@ -14,6 +14,9 @@ on:
 env:
   IMAGE_NAME: node-minimal
   NODE_VERSION: "18.19.0"
+  SCCACHE_GHA_ENABLED: "true"
+  CC: "sccache gcc"
+  CXX: "sccache gcc"
 
 jobs:
   build:
@@ -23,8 +26,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
       - name: Set MAJOR_VERSION
         run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
@@ -39,8 +42,6 @@ jobs:
 
       - name: Build Node
         run: |
-          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-          which gcc
           ./build.sh -n $NODE_VERSION
           ccache -s
           cp node-v$NODE_VERSION/out/Release/node node
