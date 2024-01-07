@@ -13,7 +13,7 @@ on:
 
 env:
   IMAGE_NAME: node-minimal
-  NODE_VERSION: "19.8.1"
+  NODE_VERSION: "19.9.0"
 
 jobs:
   build:
