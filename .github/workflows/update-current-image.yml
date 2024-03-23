@@ -15,11 +15,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get NODE_VERSION
-        run: echo "NODE_VERSION=$(./check-current-version.sh)" >> $GITHUB_ENV
+        run: echo "$(./check-current-version.sh)" >> $GITHUB_ENV
 
   build_push:
     needs: check_version
-    if: ${{ vars.NODE_VERSION != 'BUILT' }}
+    if: ${{ vars.NODE_VERSION }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,12 +28,9 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
 
-      - name: Show NODE_VERSION
-        run: echo $NODE_VERSION
-
-      - name: Set MAJOR_VERSION
+      - name: Show NODE_VERSION and MAJOR_VERSION
         run: |
-          echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+          echo $NODE_VERSION
           echo $MAJOR_VERSION
 
       - name: Build Node
