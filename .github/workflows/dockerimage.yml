@@ -32,11 +32,6 @@ jobs:
       - name: Show MAJOR_VERSION
         run: echo $MAJOR_VERSION
 
-      - name: Install build tools
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install g++ make python3
-
       - name: Build Node
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
