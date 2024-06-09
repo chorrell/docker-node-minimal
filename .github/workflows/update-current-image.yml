@@ -1,0 +1,72 @@
+name: Update Image
+
+on:
+  schedule:
+  - cron:  '0 0 * * *'
+
+env:
+  IMAGE_NAME: node-minimal
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get NODE_VERSION
+        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_ENV
+
+      - name: Set MAJOR_VERSION
+        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+
+      - name: Show NODE_VERSION and MAJOR_VERSION
+        run: |
+          echo $NODE_VERSION
+          echo $MAJOR_VERSION
+
+  build_push:
+    needs: check_version
+    if: ${{ vars.NODE_VERSION }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+
+      - name: Build Node
+        run: |
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          which gcc
+          ./build.sh -n $NODE_VERSION
+          ccache -s
+          cp node-v$NODE_VERSION/out/Release/node node
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          flavor: latest=true
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}, ghcr.io/chorrell/${{ env.IMAGE_NAME }}
+          tags: |
+            ${{ env.NODE_VERSION }}
+            ${{ env.MAJOR_VERSION }}
+            current
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
+
+      - name: Test Image
+        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
