@@ -27,7 +27,7 @@ jobs:
 
   build_push:
     needs: check_version
-    if: ${{ vars.NODE_VERSION }}
+    if: ${{ env.NODE_VERSION != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
