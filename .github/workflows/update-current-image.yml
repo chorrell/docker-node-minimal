@@ -10,15 +10,19 @@ env:
 jobs:
   check_version:
     runs-on: ubuntu-latest
+    outputs:
+      NODE_VERSION: ${{ steps.get_version.outputs.NODE_VERSION }}
+      MAJOR_VERSION: ${{ steps.get_version.outputs.MAJOR_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Get NODE_VERSION
-        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_ENV
+        id: get_version
+        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
 
       - name: Set MAJOR_VERSION
-        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_OUTPUT
 
       - name: Show NODE_VERSION and MAJOR_VERSION
         run: |
@@ -27,8 +31,8 @@ jobs:
 
   build_push:
     needs: check_version
-    if: ${{ env.NODE_VERSION != '' }}
     runs-on: ubuntu-latest
+    if: needs.check_version.outputs.NODE_VERSION
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +44,7 @@ jobs:
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           which gcc
-          ./build.sh -n $NODE_VERSION
+          ./build.sh -n ${{ needs.check_version.outputs.NODE_VERSION }}
           ccache -s
           cp node-v$NODE_VERSION/out/Release/node node
 
@@ -51,8 +55,8 @@ jobs:
           flavor: latest=true
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}, ghcr.io/chorrell/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ env.NODE_VERSION }}
-            ${{ env.MAJOR_VERSION }}
+            ${{ needs.check_version.outputs.NODE_VERSION }}
+            ${{ needs.check_version.outputs.MAJOR_VERSION }}
             current
 
       - name: Set up QEMU
@@ -66,7 +70,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
+          tags: ${{ env.IMAGE_NAME }}-${{ needs.check_version.outputs.NODE_VERSION }}
 
       - name: Test Image
-        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ needs.check_version.outputs.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
