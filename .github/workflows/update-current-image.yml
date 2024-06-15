@@ -19,20 +19,22 @@ jobs:
 
       - name: Get NODE_VERSION
         id: get_version
-        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
-
-      - name: Set MAJOR_VERSION
-        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_OUTPUT
+        run: |
+          echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
+          echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_OUTPUT
 
       - name: Show NODE_VERSION and MAJOR_VERSION
         run: |
-          echo $NODE_VERSION
-          echo $MAJOR_VERSION
+          echo ${{ steps.get_version.outputs.NODE_VERSION }}
+          echo ${{ steps.get_version.outputs.MAJOR_VERSION }}
 
   build_push:
     needs: check_version
     runs-on: ubuntu-latest
     if: needs.check_version.outputs.NODE_VERSION
+    env:
+      NODE_VERION: ${{needs.check_version.outputs.NODE_VERSION}}
+      MAJOR_VERSION: ${{needs.check_version.outputs.MAJOR_VERSION}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +46,7 @@ jobs:
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           which gcc
-          ./build.sh -n ${{ needs.check_version.outputs.NODE_VERSION }}
+          ./build.sh -n $NODE_VERSION
           ccache -s
           cp node-v$NODE_VERSION/out/Release/node node
 
@@ -55,8 +57,8 @@ jobs:
           flavor: latest=true
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}, ghcr.io/chorrell/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ needs.check_version.outputs.NODE_VERSION }}
-            ${{ needs.check_version.outputs.MAJOR_VERSION }}
+            ${{ env.NODE_VERSION }}
+            ${{ env.MAJOR_VERSION }}
             current
 
       - name: Set up QEMU
