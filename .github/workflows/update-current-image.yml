@@ -12,21 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       NODE_VERSION: ${{ steps.get_version.outputs.NODE_VERSION }}
-      MAJOR_VERSION: ${{ steps.get_version.outputs.MAJOR_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Get NODE_VERSION
         id: get_version
-        run: |
-          echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
-          echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_OUTPUT
+        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
 
-      - name: Show NODE_VERSION and MAJOR_VERSION
-        run: |
-          echo ${{ steps.get_version.outputs.NODE_VERSION }}
-          echo ${{ steps.get_version.outputs.MAJOR_VERSION }}
+      - name: Show NODE_VERSION
+        run: echo ${{ steps.get_version.outputs.NODE_VERSION }}
 
   build_push:
     needs: check_version
@@ -40,6 +35,15 @@ jobs:
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
+
+      - name: Show NODE_VERSION
+        run: echo $NODE_VERION
+
+      - name: Set MAJOR_VERSION
+        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
+
+      - name: Show MAJOR_VERSION
+        run: echo $MAJOR_VERSION
 
       - name: Build Node
         run: |
