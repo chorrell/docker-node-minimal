@@ -33,8 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.check_version.outputs.NODE_VERSION
     env:
-      NODE_VERION: ${{needs.check_version.outputs.NODE_VERSION}}
-      MAJOR_VERSION: ${{needs.check_version.outputs.MAJOR_VERSION}}
+      NODE_VERSION: ${{needs.check_version.outputs.NODE_VERSION}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
