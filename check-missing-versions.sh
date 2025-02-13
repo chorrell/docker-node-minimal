@@ -15,7 +15,7 @@ USAGE
 }
 
 LIMIT="10"
-SKIP_VERSIONS="23.5.0"
+SKIP_VERSIONS=( "23.5.0" "23.4.0" "23.3.0" )
 
 while getopts l:h? options; do
   case ${options} in
@@ -34,10 +34,6 @@ done
 NODE_VERSIONS=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -"${LIMIT}")
 
 # Check for specific tag based on NODE_VERSION
-
-# Remove skip version from NODE_VERSONS
-
-
 MISSING_VERSIONS=()
 for NODE_VERSION in $NODE_VERSIONS; do
   if ! docker manifest inspect chorrell/node-minimal:"${NODE_VERSION}" > /dev/null 2>&1; then
