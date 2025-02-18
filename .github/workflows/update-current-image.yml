@@ -18,7 +18,7 @@ jobs:
 
       - name: Get NODE_VERSION
         id: get_version
-        run: echo "NODE_VERSION=$(./check-missing-versions.sh -l 4 | tail -1)" >> $GITHUB_OUTPUT
+        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
 
       - name: Show NODE_VERSION
         run: echo ${{ steps.get_version.outputs.NODE_VERSION }}
