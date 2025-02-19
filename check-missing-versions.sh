@@ -17,7 +17,7 @@ USAGE
 LIMIT="10"
 
 # Don't build these versions: the staic builds are broken
-SKIP_VERSIONS=("23.6.0" "23.5.0" "23.4.0" "23.3.0" "22.13.1" "22.13.0")
+SKIP_VERSIONS=("23.6.1" "23.6.0" "23.5.0" "23.4.0" "23.3.0" "22.13.1" "22.13.0")
 
 while getopts l:h? options; do
   case ${options} in
