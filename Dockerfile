@@ -1,4 +1,4 @@
-# syntax=docker.io/docker/dockerfile:1.4.0
+# syntax=docker/dockerfile:1
 FROM scratch
 LABEL maintainer=christopher@horrell.ca
 LABEL org.opencontainers.image.source https://github.com/chorrell/docker-node-minimal
