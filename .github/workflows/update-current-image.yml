@@ -2,7 +2,7 @@ name: Update Image
 
 on:
   schedule:
-    - cron: '30 0,6 * * *'
+    - cron: '30 0 * * *'
 
 env:
   IMAGE_NAME: node-minimal
