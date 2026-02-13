@@ -54,6 +54,6 @@ cd "node-v$NODE_VERSION/"
 ./configure --fully-static --enable-static --without-npm --without-intl
 # See: https://github.com/nodejs/node/issues/41497#issuecomment-1013137433
 for i in out/tools/v8_gypfiles/gen-regexp-special-case.target.mk out/test_crypto_engine.target.mk; do
-  sed -i 's/\-static//g' $i || echo "nevermind"
+  sed -i.bak 's/-static//g' "$i" || true
 done
-make -j"$(getconf _NPROCESSORS_ONLN)"
+make -j"$(getconf _NPROCESSORS_ONLN)" V=0 CFLAGS="-O3" CXXFLAGS="-O3"
