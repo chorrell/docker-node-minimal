@@ -1,0 +1,11 @@
+node-v*/
+*.tar.xz
+SHASUMS256.txt
+SHASUMS256.txt.asc
+.env
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
