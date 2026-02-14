@@ -3,6 +3,12 @@ name: Update Image
 on:
   schedule:
     - cron: '30 0 * * *'
+  workflow_dispatch:
+    inputs:
+      node_version:
+        description: 'Node.js version to build (e.g., 20.10.0). Leave empty to auto-detect latest.'
+        required: false
+        type: string
 
 env:
   IMAGE_NAME: node-minimal
@@ -18,10 +24,16 @@ jobs:
 
       - name: Get NODE_VERSION
         id: get_version
-        run: echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
+        run: |
+          if [[ -n "${{ github.event.inputs.node_version }}" ]]; then
+            echo "NODE_VERSION=${{ github.event.inputs.node_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
+          fi
 
       - name: Show NODE_VERSION
-        run: echo ${{ steps.get_version.outputs.NODE_VERSION }}
+        run: |
+          echo "Building Node.js version: ${{ steps.get_version.outputs.NODE_VERSION }}"
 
   build_push:
     strategy:
