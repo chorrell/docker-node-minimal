@@ -74,7 +74,7 @@ jobs:
           ccache -p
 
       - name: Show NODE_VERSION
-        run: echo $NODE_VERION
+        run: echo $NODE_VERSION
 
       - name: Set MAJOR_VERSION
         run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
