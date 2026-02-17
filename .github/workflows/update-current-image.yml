@@ -73,14 +73,11 @@ jobs:
           ccache --set-config=hash_dir=false
           ccache -p
 
-      - name: Show NODE_VERSION
-        run: echo $NODE_VERSION
-
-      - name: Set MAJOR_VERSION
-        run: echo "MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)" >> $GITHUB_ENV
-
-      - name: Show MAJOR_VERSION
-        run: echo $MAJOR_VERSION
+      - name: Set and Display Versions
+        run: |
+          MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)
+          echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          echo "Building Node.js version: $NODE_VERSION (major: $MAJOR_VERSION)"
 
       - name: Build Node
         run: |
