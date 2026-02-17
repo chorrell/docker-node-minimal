@@ -47,6 +47,10 @@ jobs:
       - name: Get latest node version
         run: echo "LATEST_VERSION=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -1)" >> $GITHUB_ENV
 
+      - name: Display Node Version
+        run: |
+          echo "Building Node.js version: $LATEST_VERSION"
+
       - name: Build Node
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
