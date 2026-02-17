@@ -65,6 +65,13 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-${{ matrix.platform }}
+          max-size: 10G
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config=sloppiness=time_macros,locale,include_file_ctime,include_file_mtime
+          ccache --set-config=hash_dir=false
+          ccache -p
 
       - name: Show NODE_VERSION
         run: echo $NODE_VERION

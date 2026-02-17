@@ -36,6 +36,13 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-${{ matrix.platform }}
+          max-size: 10G
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config=sloppiness=time_macros,locale,include_file_ctime,include_file_mtime
+          ccache --set-config=hash_dir=false
+          ccache -p
 
       - name: Get latest node version
         run: echo "LATEST_VERSION=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -1)" >> $GITHUB_ENV
