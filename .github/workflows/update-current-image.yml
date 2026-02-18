@@ -31,11 +31,12 @@ jobs:
               echo "Error: Invalid version format '$INPUT_VERSION'. Expected format: X.Y.Z (e.g., 20.10.0)" >&2
               exit 1
             fi
-            echo "NODE_VERSION=$INPUT_VERSION" >> $GITHUB_OUTPUT
+            NODE_VERSION="$INPUT_VERSION"
           else
-            echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
+            NODE_VERSION=$(./check-missing-versions.sh | tail -1)
           fi
-          echo "Building Node.js version: ${{ steps.get_version.outputs.NODE_VERSION }}"
+          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "Building Node.js version: $NODE_VERSION"
 
   build_push:
     strategy:
