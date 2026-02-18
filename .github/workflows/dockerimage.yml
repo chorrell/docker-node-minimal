@@ -72,6 +72,8 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           load: true
           tags: ${{ env.IMAGE_NAME }}-${{ env.LATEST_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Test Image
         run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.LATEST_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
