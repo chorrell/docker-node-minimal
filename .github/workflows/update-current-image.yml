@@ -117,6 +117,8 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           load: true
           tags: ${{ env.IMAGE_NAME }}-${{ needs.check_version.outputs.NODE_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Test Image
         run: docker run --rm ${{ env.IMAGE_NAME }}-${{ needs.check_version.outputs.NODE_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
@@ -142,3 +144,5 @@ jobs:
           sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
