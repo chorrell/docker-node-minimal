@@ -22,17 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Get NODE_VERSION
+      - name: Validate and Get NODE_VERSION
         id: get_version
         run: |
           if [[ -n "${{ github.event.inputs.node_version }}" ]]; then
-            echo "NODE_VERSION=${{ github.event.inputs.node_version }}" >> $GITHUB_OUTPUT
+            INPUT_VERSION="${{ github.event.inputs.node_version }}"
+            if ! [[ $INPUT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Error: Invalid version format '$INPUT_VERSION'. Expected format: X.Y.Z (e.g., 20.10.0)" >&2
+              exit 1
+            fi
+            echo "NODE_VERSION=$INPUT_VERSION" >> $GITHUB_OUTPUT
           else
             echo "NODE_VERSION=$(./check-missing-versions.sh | tail -1)" >> $GITHUB_OUTPUT
           fi
-
-      - name: Show NODE_VERSION
-        run: |
           echo "Building Node.js version: ${{ steps.get_version.outputs.NODE_VERSION }}"
 
   build_push:
@@ -93,6 +95,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
       - name: Build
         uses: docker/build-push-action@v6
         env:
@@ -116,19 +131,6 @@ jobs:
             ${{ env.NODE_VERSION }}
             ${{ env.MAJOR_VERSION }}
             current
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.CR_PAT }}
 
       - name: Build and push Image
         uses: docker/build-push-action@v6
