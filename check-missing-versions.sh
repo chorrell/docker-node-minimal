@@ -38,6 +38,44 @@ if ! [[ "$LIMIT" =~ ^[0-9]+$ ]] || [ "$LIMIT" -lt 1 ]; then
   exit 1
 fi
 
+check_tag_with_retry() {
+  local version="$1"
+  local max_retries=10
+  local attempt=0
+
+  while [ $attempt -lt $max_retries ]; do
+    local headers_file
+    headers_file=$(mktemp)
+    local http_code
+    http_code=$(curl -w "%{http_code}" -D "$headers_file" -o /dev/null -sSL \
+      "https://hub.docker.com/v2/repositories/chorrell/node-minimal/tags/${version}")
+
+    if [[ "$http_code" == "200" ]]; then
+      rm -f "$headers_file"
+      return 1
+    elif [[ "$http_code" == "429" ]]; then
+      local retry_after
+      retry_after=$(grep -i "^retry-after:" "$headers_file" | awk '{print $2}' | tr -d '\r')
+      rm -f "$headers_file"
+
+      attempt=$((attempt + 1))
+      if [ $attempt -ge $max_retries ]; then
+        echo "Error: Docker Hub rate limit exceeded after $max_retries retries for version $version" >&2
+        exit 1
+      fi
+
+      local jitter
+      jitter=$((RANDOM % 11))
+      local total_wait=$((retry_after + jitter))
+      echo "Rate limited (429) on version $version. Waiting ${total_wait}s (retry-after: ${retry_after}s + jitter: ${jitter}s). Attempt $attempt/$max_retries" >&2
+      sleep "$total_wait"
+    else
+      rm -f "$headers_file"
+      return 0
+    fi
+  done
+}
+
 # Convert SKIP_VERSIONS array to JSON for jq filtering
 SKIP_VERSIONS_JSON=$(printf '%s\n' "${SKIP_VERSIONS[@]}" | jq -R . | jq -s .)
 
@@ -54,9 +92,7 @@ done < <(curl -fsSLo- --compressed https://nodejs.org/dist/index.json |
 MISSING_VERSIONS_OUTPUT=$(
   for PRUNED_VERSION in "${PRUNED_VERSIONS[@]}"; do
     (
-      HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -sSL \
-        "https://hub.docker.com/v2/repositories/chorrell/node-minimal/tags/${PRUNED_VERSION}")
-      [[ "$HTTP_CODE" != "200" ]] && echo "$PRUNED_VERSION"
+      check_tag_with_retry "$PRUNED_VERSION" && echo "$PRUNED_VERSION"
     ) &
   done
   wait
