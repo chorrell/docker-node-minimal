@@ -50,22 +50,25 @@ done < <(curl -fsSLo- --compressed https://nodejs.org/dist/index.json |
     '[.[].version | ltrimstr("v")] | map(select(. as $v | $skip | index($v) | not)) | .[]' |
   head -"${LIMIT}")
 
-# Check for specific tags in parallel
-MISSING_VERSIONS=()
+# Check for specific tags in parallel using Docker Hub API
 MISSING_VERSIONS_OUTPUT=$(
   for PRUNED_VERSION in "${PRUNED_VERSIONS[@]}"; do
     (
-      docker manifest inspect chorrell/node-minimal:"$PRUNED_VERSION" > /dev/null 2>&1 || echo "$PRUNED_VERSION"
+      HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -sSL \
+        "https://hub.docker.com/v2/repositories/chorrell/node-minimal/tags/${PRUNED_VERSION}")
+      [[ "$HTTP_CODE" != "200" ]] && echo "$PRUNED_VERSION"
     ) &
   done
   wait
 )
 
 # Convert output to array, filtering empty lines
+MISSING_VERSIONS=()
 while IFS= read -r version; do
   [[ -n "$version" ]] && MISSING_VERSIONS+=("$version")
 done <<< "$MISSING_VERSIONS_OUTPUT"
 
+# Sort versions before printing (semantic version sort)
 if [ ${#MISSING_VERSIONS[@]} -gt 0 ]; then
-  printf '%s\n' "${MISSING_VERSIONS[@]}"
+  printf '%s\n' "${MISSING_VERSIONS[@]}" | sort -V
 fi
