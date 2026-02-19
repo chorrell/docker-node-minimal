@@ -71,17 +71,41 @@ Compiles Node.js statically:
 
 Checks for new Node.js versions to build:
 
-- Queries GitHub Node.js repository
-- Filters out broken builds
-- Returns newest version to build
+- Queries Node.js distribution API (nodejs.org/dist/index.json)
+- Filters out known broken builds (SKIP_VERSIONS array)
+- Checks Docker Hub API to find truly missing versions (does not count against pull rate limits)
+- Returns newest missing version(s) sorted semantically
+- Usage: `./check-missing-versions.sh -l 5` (limit to 5 versions)
+- Runs in parallel for efficiency
 
 ## Code Quality
 
 - **Linting:** shellcheck (shell script linting)
 - **Formatting:** shfmt (enforces consistent shell style)
+- **Pre-commit hooks:** `.pre-commit-config.yaml` enforces checks locally before commit
+  - shellcheck on all `.sh` and `.bats` files
+  - shfmt on all `.sh` and `.bats` files (with `-sr -i 2 -w -ci` flags)
+  - markdownlint-cli2 on all `.md` files (respects `.markdownlint.yaml` config)
+  - Install with: `pre-commit install`
+  - Run manually: `pre-commit run --all-files`
 - **Branch Protection:** main branch requires passing checks and code owner review
 
 ## Testing
+
+### Unit Tests
+
+Comprehensive Bats test suite for check-missing-versions.sh:
+
+- Run tests: `bats test/check-missing-versions.bats`
+- 22 tests covering:
+  - Input validation (LIMIT parameter)
+  - Help/usage output
+  - Script execution with various parameters
+  - Output format validation (semantic versioning)
+  - SKIP_VERSIONS filtering
+  - Docker Hub API integration
+
+### Integration Tests
 
 Integration tests run in CI:
 
