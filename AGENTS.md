@@ -86,8 +86,8 @@ Checks for new Node.js versions to build:
   - shellcheck on all `.sh` and `.bats` files
   - shfmt on all `.sh` and `.bats` files (with `-sr -i 2 -w -ci` flags)
   - markdownlint-cli2 on all `.md` files (respects `.markdownlint.yaml` config)
-  - Install with: `pre-commit install`
-  - Run manually: `pre-commit run --all-files`
+  - See [SETUP.md](./SETUP.md) for detailed installation instructions
+  - Quick start: `pre-commit install` then hooks run automatically on commit
 - **Branch Protection:** main branch requires passing checks and code owner review
 
 ## Testing
