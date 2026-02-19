@@ -36,7 +36,11 @@ jobs:
             NODE_VERSION=$(./check-missing-versions.sh | tail -1)
           fi
           echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
-          echo "Building Node.js version: $NODE_VERSION"
+          if [[ -n "$NODE_VERSION" ]]; then
+            echo "Building Node.js version: $NODE_VERSION"
+          else
+            echo "No new Node.js versions to build"
+          fi
 
   build_push:
     strategy:
