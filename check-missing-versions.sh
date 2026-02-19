@@ -38,27 +38,33 @@ if ! [[ "$LIMIT" =~ ^[0-9]+$ ]] || [ "$LIMIT" -lt 1 ]; then
   exit 1
 fi
 
-NODE_VERSIONS=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -"${LIMIT}")
+# Convert SKIP_VERSIONS array to JSON for jq filtering
+SKIP_VERSIONS_JSON=$(printf '%s\n' "${SKIP_VERSIONS[@]}" | jq -R . | jq -s .)
 
+# Fetch, filter skip list, remove 'v' prefix, and limit in one pipeline
 PRUNED_VERSIONS=()
-for NODE_VERSION in $NODE_VERSIONS; do
-  skip=
-  for VERSION in "${SKIP_VERSIONS[@]}"; do
-    [[ $NODE_VERSION == "$VERSION" ]] && {
-      skip=1
-      break
-    }
-  done
-  [[ -n $skip ]] || PRUNED_VERSIONS+=("$NODE_VERSION")
-done
+while IFS= read -r version; do
+  [[ -n "$version" ]] && PRUNED_VERSIONS+=("$version")
+done < <(curl -fsSLo- --compressed https://nodejs.org/dist/index.json |
+  jq -r --argjson skip "$SKIP_VERSIONS_JSON" \
+    '[.[].version | ltrimstr("v")] | map(select(. as $v | $skip | index($v) | not)) | .[]' |
+  head -"${LIMIT}")
 
-# Check for specific tag based on PRUNED_VERSION
+# Check for specific tags in parallel
 MISSING_VERSIONS=()
-for PRUNED_VERSION in "${PRUNED_VERSIONS[@]}"; do
-  if ! docker manifest inspect chorrell/node-minimal:"$PRUNED_VERSION" > /dev/null 2>&1; then
-    MISSING_VERSIONS+=("$PRUNED_VERSION")
-  fi
-done
+MISSING_VERSIONS_OUTPUT=$(
+  for PRUNED_VERSION in "${PRUNED_VERSIONS[@]}"; do
+    (
+      docker manifest inspect chorrell/node-minimal:"$PRUNED_VERSION" > /dev/null 2>&1 || echo "$PRUNED_VERSION"
+    ) &
+  done
+  wait
+)
+
+# Convert output to array, filtering empty lines
+while IFS= read -r version; do
+  [[ -n "$version" ]] && MISSING_VERSIONS+=("$version")
+done <<< "$MISSING_VERSIONS_OUTPUT"
 
 if [ ${#MISSING_VERSIONS[@]} -gt 0 ]; then
   printf '%s\n' "${MISSING_VERSIONS[@]}"
