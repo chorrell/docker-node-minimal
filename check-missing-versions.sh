@@ -55,4 +55,6 @@ for PRUNED_VERSION in "${PRUNED_VERSIONS[@]}"; do
   fi
 done
 
-printf '%s\n' "${MISSING_VERSIONS[@]}"
+if [ ${#MISSING_VERSIONS[@]} -gt 0 ]; then
+  printf '%s\n' "${MISSING_VERSIONS[@]}"
+fi
