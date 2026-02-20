@@ -122,15 +122,14 @@ SKIP_VERSIONS_JSON=$(echo "$SKIP_VERSIONS" | jq -R . | jq -s .)
 #     $skip | index($v)              - Check if $v is in SKIP_VERSIONS array
 #                                      Returns index (0+) if found, null if not
 #     | not                          - Invert: keep version only if NOT in skip list
-#   .[]                              - Unpack array to individual lines
-#   head -${LIMIT}                   - Limit to first N versions
+#   limit($limit; ..[])              - Limit to first N versions using jq (avoids broken pipe)
+# Note: Using jq's limit() instead of head to avoid broken pipe error when limiting output
 PRUNED_VERSIONS=()
 while IFS= read -r version; do
   [[ -n "$version" ]] && PRUNED_VERSIONS+=("$version")
 done < <(curl -fsSLo- --compressed https://nodejs.org/dist/index.json |
-  jq -r --argjson skip "$SKIP_VERSIONS_JSON" \
-    '[.[].version | ltrimstr("v")] | map(select(. as $v | $skip | index($v) | not)) | .[]' |
-  head -"${LIMIT}")
+  jq -r --argjson skip "$SKIP_VERSIONS_JSON" --arg limit "$LIMIT" \
+    '[.[].version | ltrimstr("v")] | map(select(. as $v | $skip | index($v) | not)) | limit($limit | tonumber; .[])')
 
 # Check which versions from PRUNED_VERSIONS are missing from Docker Hub.
 # Run check_tag_with_retry in parallel (one background job per version) for efficiency.
