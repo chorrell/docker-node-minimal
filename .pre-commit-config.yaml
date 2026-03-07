@@ -1,21 +1,22 @@
 repos:
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+  - repo: local
     hooks:
-      - id: shellcheck
+      - id: shellcheck-docker
+        name: shellcheck (Docker)
+        entry: bash -c 'docker run --rm -v "$(pwd)":/mnt koalaman/shellcheck:stable "$@"' bash
+        language: system
         types: [shell]
         files: \.(sh|bats)$
 
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.9.0-1
-    hooks:
-      - id: shfmt
-        args: [-sr, -i, '2', -w, -ci]
+      - id: shfmt-docker
+        name: shfmt (Docker)
+        entry: bash -c 'docker run --rm -v "$(pwd)":/work -w /work mvdan/shfmt:v3 -sr -i 2 -w -ci "$@"' bash
+        language: system
         types: [shell]
         files: \.(sh|bats)$
 
-  - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.15.0
-    hooks:
-      - id: markdownlint-cli2
+      - id: markdownlint-docker
+        name: markdownlint-cli2 (Docker)
+        entry: bash -c 'docker run --rm -v "$(pwd)":/work -w /work node:lts-alpine npx markdownlint-cli2 "$@"' bash
+        language: system
         types: [markdown]

@@ -90,6 +90,63 @@ Checks for new Node.js versions to build:
   - Quick start: `pre-commit install` then hooks run automatically on commit
 - **Branch Protection:** main branch requires passing checks and code owner review
 
+## Docker-Based Development
+
+All development tools run in official Docker containers. This approach requires only Docker; no local installation of shellcheck, shfmt, or Node.js needed.
+
+### Getting Started
+
+```bash
+# Run all linters
+make lint
+
+# Auto-fix formatting issues
+make format
+
+# See all available commands
+make help
+```
+
+### Makefile Targets
+
+The `Makefile` provides convenient targets for code quality checks:
+
+- `make lint` - Run all linters (shellcheck, shfmt, markdownlint)
+- `make format` - Auto-fix shell script formatting with shfmt
+- `make shellcheck` - Run shellcheck
+- `make shfmt` - Check shell script formatting
+- `make shfmt-fix` - Auto-fix shell formatting
+- `make markdown-lint` - Check markdown files
+- `make help` - Display all available targets
+
+### Pre-commit Hooks with Docker
+
+Pre-commit hooks are configured to run tools inside Docker containers for consistency:
+
+```bash
+pre-commit install  # Install hooks
+pre-commit run --all-files  # Run manually
+```
+
+Hooks automatically execute on commit using official Docker images. See [SETUP.md](./SETUP.md) for complete setup instructions.
+
+### For AI Agents
+
+To run development checks in an agent environment with only Docker available:
+
+```bash
+# Run all linters via Makefile
+make lint
+make format
+
+# Or run individual Docker commands
+docker run --rm -v "$(pwd)":/mnt koalaman/shellcheck:stable *.sh
+docker run --rm -v "$(pwd)":/work -w /work mvdan/shfmt:v3 -sr -i 2 -l -ci *.sh
+docker run --rm -v "$(pwd)":/work -w /work node:lts-alpine npx markdownlint-cli2 "*.md"
+```
+
+This approach requires only Docker to be installed in the agent's environment.
+
 ## Testing
 
 ### Unit Tests
