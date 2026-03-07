@@ -1,0 +1,38 @@
+name: Linting
+
+on:
+  pull_request:
+
+jobs:
+  shfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: shfmt
+        run: |
+          docker run --rm -v "$(pwd)":/sh -w /sh mvdan/shfmt:v3 -sr -i 2 -l -w -ci .
+          git diff --color --exit-code
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Shellcheck
+        run: |
+          shellcheck *.sh
+          shellcheck test/*.bats
+
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v22
+        with:
+          globs: '*.md'
