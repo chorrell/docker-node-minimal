@@ -80,14 +80,13 @@ Checks for new Node.js versions to build:
 
 ## Code Quality
 
-- **Linting:** shellcheck (shell script linting)
-- **Formatting:** shfmt (enforces consistent shell style)
-- **Pre-commit hooks:** `.pre-commit-config.yaml` enforces checks locally before commit
-  - shellcheck on all `.sh` and `.bats` files
-  - shfmt on all `.sh` and `.bats` files (with `-sr -i 2 -w -ci` flags)
-  - markdownlint-cli2 on all `.md` files (respects `.markdownlint.yaml` config)
+- **Linting & Formatting:** Enforced via Docker-based pre-commit hooks
+- **Pre-commit hooks:** `.pre-commit-config.yaml` enforces checks locally before commit using Docker
+  - shellcheck on all `.sh` and `.bats` files (shell script linting)
+  - shfmt on all `.sh` and `.bats` files (auto-formatting with `-sr -i 2 -w -ci` flags)
+  - markdownlint-cli2 on all `.md` files (markdown linting with `.markdownlint.yaml` config)
   - See [SETUP.md](./SETUP.md) for detailed installation instructions
-  - Quick start: `pre-commit install` then hooks run automatically on commit
+  - Quick start: `pre-commit install` then hooks run automatically on commit (requires Docker)
 - **Branch Protection:** main branch requires passing checks and code owner review
 
 ## Testing
