@@ -4,7 +4,7 @@ This guide explains how to set up the pre-commit hooks for this repository on ma
 
 ## Overview
 
-Pre-commit hooks automatically validate your code before each commit, catching issues early and ensuring consistent code quality. This repository enforces:
+Pre-commit hooks automatically validate your code before each commit, catching issues early and ensuring consistent code quality. This repository uses Docker-based pre-commit hooks to enforce:
 
 - **shellcheck** - Validates shell script syntax and best practices
 - **shfmt** - Auto-formats shell scripts consistently
@@ -16,72 +16,39 @@ These same checks also run in GitHub Actions (checkshell.yml workflow), so using
 
 Before installing pre-commit hooks, ensure you have:
 
-- **Python 3.14+** - Required for the pre-commit framework
 - **Homebrew** - macOS package manager
-- **Node.js 22+ and npm** - Required for markdownlint-cli2
+- **Docker** - Required for running the linting tools in containers
 
 ## Installation Instructions
 
 Follow these steps to set up pre-commit hooks on macOS:
 
-### Step 1: Install Homebrew (if needed)
+### Step 1: Verify Docker is Installed
 
-If you don't have Homebrew installed:
+Check that Docker is running:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+docker --version
+docker ps
 ```
 
-### Step 2: Install Required Tools via Homebrew
+If Docker is not installed, download and install [Docker Desktop](https://www.docker.com/products/docker-desktop).
 
-Install all necessary tools in one command:
+### Step 2: Install pre-commit Framework
 
-```bash
-brew install pre-commit shellcheck shfmt
-```
-
-This installs:
-
-- **pre-commit 4.5.1** - Framework for managing pre-commit hooks
-- **shellcheck 0.11.0** - Shell script static analysis tool
-- **shfmt 3.12.0** - Shell script formatter (formats with `-sr -i 2 -w -ci` flags)
-
-### Step 3: Install Node.js and npm (if needed)
-
-If you don't have Node.js and npm, install via Homebrew:
+Install pre-commit using Homebrew:
 
 ```bash
-brew install node
-```
-
-Alternatively, use a Node.js version manager:
-
-```bash
-# Using nvm
-nvm install --lts
-
-# Using fnm (Fast Node Manager)
-fnm install --lts
+brew install pre-commit
 ```
 
 Verify installation:
 
 ```bash
-node --version
-npm --version
+pre-commit --version
 ```
 
-### Step 4: Install markdownlint-cli2
-
-Install the markdown linter globally via npm:
-
-```bash
-npm install -g markdownlint-cli2
-```
-
-This installs **markdownlint-cli2 v0.20.0** - Markdown file linter.
-
-### Step 5: Enable Pre-commit Hooks
+### Step 3: Enable Pre-commit Hooks
 
 Navigate to the repository and install the hooks:
 
@@ -96,7 +63,7 @@ You should see:
 pre-commit installed at .git/hooks/pre-commit
 ```
 
-### Step 6: Verify Installation
+### Step 4: Verify Installation
 
 Test that all hooks work correctly:
 
@@ -112,13 +79,13 @@ shfmt........Passed
 markdownlint-cli2...Passed
 ```
 
-All three should pass without errors.
+All three should pass without errors. Docker will automatically pull the required container images on first run.
 
 ## Usage
 
 ### Running Hooks Automatically
 
-Hooks run automatically when you commit:
+Hooks run automatically when you commit. Docker containers are launched automatically:
 
 ```bash
 git commit -m "Your commit message"
@@ -138,8 +105,8 @@ Run a specific hook:
 
 ```bash
 pre-commit run shellcheck --all-files
-pre-commit run shfmt --all-files
-pre-commit run markdownlint-cli2 --all-files
+pre-commit run shfmt-docker --all-files
+pre-commit run markdownlint-cli2-docker --all-files
 ```
 
 Run hooks only on changed files (default behavior at commit time):
@@ -166,13 +133,14 @@ git commit --no-verify
 
 ## Hook Configuration
 
-Hooks are defined in `.pre-commit-config.yaml`. Here's what each hook does:
+Hooks are defined in `.pre-commit-config.yaml` and run inside Docker containers. Here's what each hook does:
 
 ### shellcheck
 
 - **Purpose**: Validates shell script syntax and style
 - **Files checked**: `*.sh` and `*.bats`
 - **Configuration**: Default shellcheck rules
+- **Docker image**: Runs in `koalaman/shellcheck` container
 
 Detects:
 
@@ -190,6 +158,7 @@ Detects:
   - `-i 2`: Indent with 2 spaces
   - `-w`: Write changes back to files
   - `-ci`: Indent switch cases
+- **Docker image**: Runs in `mvdan/sh` container
 
 Matches the formatting used in CI (GitHub Actions checkshell.yml).
 
@@ -198,6 +167,7 @@ Matches the formatting used in CI (GitHub Actions checkshell.yml).
 - **Purpose**: Enforces markdown style guidelines
 - **Files checked**: `*.md`
 - **Configuration**: Respects `.markdownlint.yaml` in repository root
+- **Docker image**: Runs in `davidanson/markdownlint-cli2` container
 
 Current settings:
 
@@ -220,31 +190,24 @@ brew uninstall pre-commit
 brew install pre-commit
 ```
 
-### "shellcheck: command not found"
+### Docker errors when running hooks
 
-**Solution**: Install via Homebrew:
+Hooks run Docker containers for linting tools. Ensure Docker is running.
 
-```bash
-brew install shellcheck
-```
+**Solution**:
 
-### "shfmt: command not found"
+1. Start Docker Desktop (if using macOS)
+2. Verify Docker is available: `docker ps`
+3. Check if containers can be pulled: `docker pull alpine` (test)
 
-**Solution**: Install via Homebrew:
+### "Cannot connect to Docker daemon"
 
-```bash
-brew install shfmt
-```
+Docker Desktop is not running or Docker is not installed.
 
-### "markdownlint-cli2: command not found"
+**Solution**:
 
-**Solution**: Install via npm:
-
-```bash
-npm install -g markdownlint-cli2
-```
-
-Make sure Node.js and npm are installed first.
+1. Start Docker Desktop from Applications
+2. Or install Docker Desktop: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
 
 ### Hooks not running after `pre-commit install`
 
@@ -275,6 +238,12 @@ chmod +x .git/hooks/pre-commit
 pre-commit clean
 pre-commit run --all-files
 ```
+
+### Slow first run of hooks
+
+Docker container images are large. The first run will pull required images (shellcheck, shfmt, markdownlint-cli2), which may take a few minutes.
+
+**Solution**: Wait for initial pull to complete. Subsequent runs will be faster as images are cached locally.
 
 ## CI/CD Integration
 
