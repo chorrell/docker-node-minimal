@@ -6,13 +6,13 @@ repos:
         files: \.(sh|bats)$
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
+    rev: v3.13.0-1
     hooks:
       - id: shfmt-docker
         args: [-sr, -i, '2', -w, -ci]
         files: \.(sh|bats)$
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.21.0
+    rev: v0.22.0
     hooks:
       - id: markdownlint-cli2-docker
