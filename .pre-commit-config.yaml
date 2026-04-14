@@ -6,7 +6,7 @@ repos:
         files: \.(sh|bats)$
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.13.0-1
+    rev: v3.13.1-1
     hooks:
       - id: shfmt-docker
         args: [-sr, -i, '2', -w, -ci]
