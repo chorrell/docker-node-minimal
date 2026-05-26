@@ -54,7 +54,7 @@ jobs:
           ccache -p
 
       - name: Get latest node version
-        run: echo "LATEST_VERSION=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -1)" >> $GITHUB_ENV
+        run: echo "LATEST_VERSION=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -1)" >> "$GITHUB_ENV"
 
       - name: Display Node Version
         run: |
@@ -64,9 +64,9 @@ jobs:
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           which gcc
-          ./build.sh -n $LATEST_VERSION
+          ./build.sh -n "$LATEST_VERSION"
           ccache -s
-          cp node-v$LATEST_VERSION/out/Release/node node
+          cp "node-v${LATEST_VERSION}/out/Release/node" node
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
