@@ -142,4 +142,4 @@ Required for publishing (GitHub Actions secrets):
 
 - `DOCKERHUB_USERNAME` - Docker Hub username
 - `DOCKERHUB_TOKEN` - Docker Hub authentication token
-- `CR_PAT` - GitHub Container Registry personal access token
+- `GITHUB_TOKEN` - Automatically provided by GitHub Actions (no manual setup required)
