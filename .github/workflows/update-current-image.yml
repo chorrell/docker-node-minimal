@@ -20,7 +20,6 @@ env:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   check_version:
@@ -72,6 +71,9 @@ jobs:
 
     needs: check_version
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      packages: write
 
     if: needs.check_version.outputs.NODE_VERSION
     env:
@@ -156,6 +158,8 @@ jobs:
   merge:
     needs: [check_version, build]
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     env:
       NODE_VERSION: ${{ needs.check_version.outputs.NODE_VERSION }}
 
@@ -180,26 +184,33 @@ jobs:
         run: echo "MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)" >> $GITHUB_ENV
 
       - name: Create DockerHub multi-arch manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          REPO="${DOCKERHUB_USERNAME}/${IMAGE_NAME}"
           docker buildx imagetools create \
-            -t "${REPO}:${{ env.NODE_VERSION }}" \
-            -t "${REPO}:${{ env.MAJOR_VERSION }}" \
+            -t "${REPO}:${NODE_VERSION}" \
+            -t "${REPO}:${MAJOR_VERSION}" \
             -t "${REPO}:current" \
             -t "${REPO}:latest" \
-            "${REPO}:build-${{ github.run_id }}-amd64" \
-            "${REPO}:build-${{ github.run_id }}-arm64"
+            "${REPO}:build-${RUN_ID}-amd64" \
+            "${REPO}:build-${RUN_ID}-arm64"
 
       - name: Create GHCR multi-arch manifests
+        env:
+          RUN_ID: ${{ github.run_id }}
         run: |
           docker buildx imagetools create \
-            -t "${{ env.GHCR_IMAGE }}:${{ env.NODE_VERSION }}" \
-            -t "${{ env.GHCR_IMAGE }}:${{ env.MAJOR_VERSION }}" \
-            -t "${{ env.GHCR_IMAGE }}:current" \
-            -t "${{ env.GHCR_IMAGE }}:latest" \
-            "${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-amd64" \
-            "${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-arm64"
+            -t "${GHCR_IMAGE}:${NODE_VERSION}" \
+            -t "${GHCR_IMAGE}:${MAJOR_VERSION}" \
+            -t "${GHCR_IMAGE}:current" \
+            -t "${GHCR_IMAGE}:latest" \
+            "${GHCR_IMAGE}:build-${RUN_ID}-amd64" \
+            "${GHCR_IMAGE}:build-${RUN_ID}-arm64"
 
       - name: Inspect manifest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker buildx imagetools inspect "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.NODE_VERSION }}"
+          docker buildx imagetools inspect "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${NODE_VERSION}"
