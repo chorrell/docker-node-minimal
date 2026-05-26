@@ -10,6 +10,9 @@ on:
 env:
   IMAGE_NAME: node-minimal
 
+permissions:
+  contents: read
+
 jobs:
   build:
     strategy:
@@ -76,4 +79,4 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}-${{ env.LATEST_VERSION }}
 
       - name: Test Image
-        run: docker run --rm ${{ env.IMAGE_NAME }}-${{ env.LATEST_VERSION }} -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm "${IMAGE_NAME}-${LATEST_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"

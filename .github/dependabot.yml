@@ -12,6 +12,8 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
@@ -24,4 +26,6 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    cooldown:
+      default-days: 7
 
