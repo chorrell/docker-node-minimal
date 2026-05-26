@@ -49,10 +49,12 @@ ENTRYPOINT ["/bin/node"]
 - Builds and publishes to Docker Hub and GitHub Container Registry
 - Tags with version, major version, and "current"
 
-### checkshell.yml
+### linting.yml
 
-- Validates shell script formatting with shfmt
+- Runs on all pull requests
+- Validates shell script formatting with shfmt (direct binary, not Docker)
 - Runs shellcheck for shell script linting
+- Runs markdownlint-cli2 for Markdown linting
 
 ## Scripts
 
@@ -80,6 +82,7 @@ Checks for new Node.js versions to build:
 
 ## Code Quality
 
+- **Workflow Security:** All workflows under `.github/` must pass a [zizmor](https://docs.zizmor.sh/) audit (`zizmor .github/workflows/`) with no unsuppressed findings before merging
 - **Linting & Formatting:** Enforced via Docker-based pre-commit hooks
 - **Pre-commit hooks:** `.pre-commit-config.yaml` enforces checks locally before commit using Docker
   - shellcheck on all `.sh` and `.bats` files (shell script linting)
