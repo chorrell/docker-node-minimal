@@ -10,11 +10,17 @@ on:
         required: false
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   IMAGE_NAME: node-minimal
+  GHCR_IMAGE: ghcr.io/chorrell/node-minimal
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   check_version:
@@ -49,7 +55,7 @@ jobs:
             echo "No new Node.js versions to build"
           fi
 
-  build_push:
+  build:
     strategy:
       matrix:
         os:
@@ -122,7 +128,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
-      - name: Build
+      - name: Build test image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         env:
           DOCKER_BUILD_SUMMARY: false
@@ -130,23 +136,12 @@ jobs:
           context: .
           platforms: linux/${{ matrix.platform }}
           load: true
-          tags: ${{ env.IMAGE_NAME }}-${{ needs.check_version.outputs.NODE_VERSION }}
+          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
 
       - name: Test Image
         run: docker run --rm "${IMAGE_NAME}-${NODE_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
-        with:
-          flavor: latest=true
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}, ghcr.io/chorrell/${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ env.NODE_VERSION }}
-            ${{ env.MAJOR_VERSION }}
-            current
-
-      - name: Build and push Image
+      - name: Build and push per-platform image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
@@ -154,5 +149,57 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:build-${{ github.run_id }}-${{ matrix.platform }}
+            ${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-${{ matrix.platform }}
+
+  merge:
+    needs: [check_version, build]
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: ${{ needs.check_version.outputs.NODE_VERSION }}
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Set major version
+        run: echo "MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)" >> $GITHUB_ENV
+
+      - name: Create DockerHub multi-arch manifests
+        run: |
+          REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          docker buildx imagetools create \
+            -t "${REPO}:${{ env.NODE_VERSION }}" \
+            -t "${REPO}:${{ env.MAJOR_VERSION }}" \
+            -t "${REPO}:current" \
+            -t "${REPO}:latest" \
+            "${REPO}:build-${{ github.run_id }}-amd64" \
+            "${REPO}:build-${{ github.run_id }}-arm64"
+
+      - name: Create GHCR multi-arch manifests
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.GHCR_IMAGE }}:${{ env.NODE_VERSION }}" \
+            -t "${{ env.GHCR_IMAGE }}:${{ env.MAJOR_VERSION }}" \
+            -t "${{ env.GHCR_IMAGE }}:current" \
+            -t "${{ env.GHCR_IMAGE }}:latest" \
+            "${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-amd64" \
+            "${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-arm64"
+
+      - name: Inspect manifest
+        run: |
+          docker buildx imagetools inspect "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.NODE_VERSION }}"
