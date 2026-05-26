@@ -7,6 +7,10 @@ on:
       - "build.sh"
       - ".github/workflows/dockerimage.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   IMAGE_NAME: node-minimal
 
