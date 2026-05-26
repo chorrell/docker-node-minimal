@@ -42,7 +42,7 @@ jobs:
 
       - name: Shellcheck
         run: |
-          shellcheck *.sh
+          shellcheck ./*.sh
           shellcheck test/*.bats
 
   markdownlint:

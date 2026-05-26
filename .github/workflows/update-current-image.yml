@@ -47,7 +47,7 @@ jobs:
           else
             NODE_VERSION=$(./check-missing-versions.sh | tail -1)
           fi
-          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "NODE_VERSION=$NODE_VERSION" >> "$GITHUB_OUTPUT"
           if [[ -n "$NODE_VERSION" ]]; then
             echo "Building Node.js version: $NODE_VERSION"
           else
@@ -99,17 +99,17 @@ jobs:
 
       - name: Set and Display Versions
         run: |
-          MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f 1)
-          echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)
+          echo "MAJOR_VERSION=$MAJOR_VERSION" >> "$GITHUB_ENV"
           echo "Building Node.js version: $NODE_VERSION (major: $MAJOR_VERSION)"
 
       - name: Build Node
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           which gcc
-          ./build.sh -n $NODE_VERSION
+          ./build.sh -n "$NODE_VERSION"
           ccache -s
-          cp node-v$NODE_VERSION/out/Release/node node
+          cp "node-v${NODE_VERSION}/out/Release/node" node
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
@@ -181,7 +181,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set major version
-        run: echo "MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)" >> $GITHUB_ENV
+        run: echo "MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)" >> "$GITHUB_ENV"
 
       - name: Create DockerHub multi-arch manifests
         env:
