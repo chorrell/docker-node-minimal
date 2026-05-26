@@ -137,6 +137,8 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           load: true
           tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
 
       - name: Test Image
         run: docker run --rm "${IMAGE_NAME}-${NODE_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"
@@ -152,6 +154,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:build-${{ github.run_id }}-${{ matrix.platform }}
             ${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
 
   merge:
     needs: [check_version, build]
