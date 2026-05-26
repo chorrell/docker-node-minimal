@@ -4,7 +4,7 @@ A minimal Docker image with just Node.js.
 
 ## Use the Docker Hub Image
 
-This image is published to the GitHub Container Registry:
+This image is published to Docker Hub:
 
 <https://hub.docker.com/r/chorrell/node-minimal>
 
