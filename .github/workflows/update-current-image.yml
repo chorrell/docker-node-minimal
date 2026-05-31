@@ -24,6 +24,8 @@ permissions:
 jobs:
   check_version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       NODE_VERSION: ${{ steps.get_version.outputs.NODE_VERSION }}
     steps:
@@ -159,6 +161,7 @@ jobs:
     needs: [check_version, build]
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
     env:
       NODE_VERSION: ${{ needs.check_version.outputs.NODE_VERSION }}
