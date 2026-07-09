@@ -10,13 +10,16 @@ updates:
       github-official:
         patterns:
           - "actions/*"
-      docker:
-        patterns:
-          - "docker/*"
-      minor-and-patches:
         update-types:
           - "minor"
           - "patch"
+      docker:
+        patterns:
+          - "docker/*"
+        update-types:
+          - "minor"
+          - "patch"
+
     pull-request-branch-name:
       separator: "/"
     commit-message:
