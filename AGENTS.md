@@ -8,6 +8,9 @@ This repository builds minimal Node.js Docker images. To build and test locally:
 # Build Node.js binary for a specific version
 ./build.sh -n 20.10.0
 
+# Copy the compiled binary into the build context (expected by the Dockerfile)
+cp node-v20.10.0/out/Release/node node
+
 # Test the generated binary
 docker build -t node-minimal .
 docker run --rm node-minimal -e "console.log('Hello from Node.js ' + process.version)"
@@ -37,17 +40,17 @@ ENTRYPOINT ["/bin/node"]
 
 ### dockerimage.yml
 
-- Builds Docker images on PR changes to Dockerfile/build.sh
+- Builds Docker images on PR changes to `Dockerfile`, `build.sh`, or the workflow file itself
 - Tests on both linux/amd64 and linux/arm64 platforms
 - Uses ccache for faster compilation
 - Automatically detects latest Node.js version
 
 ### update-current-image.yml
 
-- Runs daily on schedule (cron: `30 0 * * *`)
-- Checks for new Node.js releases
+- Runs daily on schedule (cron: `30 0 * * *`), or manually via `workflow_dispatch` with an optional `node_version` input
+- Checks for new Node.js releases (via `check-missing-versions.sh`) unless a specific version is provided
 - Builds and publishes to Docker Hub and GitHub Container Registry
-- Tags with version, major version, and "current"
+- Tags with exact version, major version, `current`, and `latest`
 
 ### linting.yml
 
@@ -83,11 +86,15 @@ Checks for new Node.js versions to build:
 ## Code Quality
 
 - **Workflow Security:** All workflows under `.github/` must pass a [zizmor](https://docs.zizmor.sh/) audit (`zizmor .github/workflows/`) with no unsuppressed findings before merging
-- **Linting & Formatting:** Enforced via Docker-based pre-commit hooks
-- **Pre-commit hooks:** `.pre-commit-config.yaml` enforces checks locally before commit using Docker
-  - shellcheck on all `.sh` and `.bats` files (shell script linting)
-  - shfmt on all `.sh` and `.bats` files (auto-formatting with `-sr -i 2 -w -ci` flags)
-  - markdownlint-cli2 on all `.md` files (markdown linting with `.markdownlint.yaml` config)
+- **Linting & Formatting:** Enforced via `linting.yml` in CI (shfmt, shellcheck, markdownlint-cli2) and locally via pre-commit hooks
+- **Pre-commit hooks:** `.pre-commit-config.yaml` enforces the following checks locally before commit (some run via Docker, others via native binaries):
+  - `actionlint` - lints GitHub Actions workflow files
+  - `gitleaks` - scans for leaked secrets
+  - `markdownlint-cli2-docker` on all `.md` files (markdown linting with `.markdownlint.yaml` config)
+  - Standard `pre-commit-hooks`: trailing-whitespace, end-of-file-fixer, check-yaml, check-merge-conflict, check-added-large-files, mixed-line-ending
+  - `shfmt-docker` on all `.sh` and `.bats` files (auto-formatting with `-sr -i 2 -w -ci` flags)
+  - `shellcheck` on all `.sh` and `.bats` files (shell script linting)
+  - `zizmor` - GitHub Actions workflow security audit
   - See [SETUP.md](./SETUP.md) for detailed installation instructions
   - Quick start: `pre-commit install` then hooks run automatically on commit (requires Docker)
 - **Branch Protection:** main branch requires passing checks and code owner review
