@@ -4,13 +4,17 @@ This guide explains how to set up the pre-commit hooks for this repository on ma
 
 ## Overview
 
-Pre-commit hooks automatically validate your code before each commit, catching issues early and ensuring consistent code quality. This repository uses Docker-based pre-commit hooks to enforce:
+Pre-commit hooks automatically validate your code before each commit, catching issues early and ensuring consistent code quality. This repository configures the following hooks (some run via Docker, others via native binaries installed by the `pre-commit` framework):
 
+- **actionlint** - Lints GitHub Actions workflow files
+- **gitleaks** - Scans for leaked secrets
+- **markdownlint-cli2** (Docker) - Enforces markdown style guidelines
+- **pre-commit-hooks** - Standard checks: trailing-whitespace, end-of-file-fixer, check-yaml, check-merge-conflict, check-added-large-files, mixed-line-ending
+- **shfmt** (Docker) - Auto-formats shell scripts consistently
 - **shellcheck** - Validates shell script syntax and best practices
-- **shfmt** - Auto-formats shell scripts consistently
-- **markdownlint-cli2** - Enforces markdown style guidelines
+- **zizmor** - Audits GitHub Actions workflows for security issues
 
-These same checks also run in GitHub Actions (checkshell.yml workflow), so using pre-commit hooks locally saves time by catching issues before pushing.
+The shfmt and shellcheck checks also run in GitHub Actions (`linting.yml` workflow), so using pre-commit hooks locally saves time by catching issues before pushing.
 
 ## Prerequisites
 
@@ -74,12 +78,21 @@ pre-commit run --all-files
 You should see output like:
 
 ```bash
-shellcheck...Passed
-shfmt........Passed
-markdownlint-cli2...Passed
+Lint GitHub Actions workflow files.......................................Passed
+Detect hardcoded secrets.................................................Passed
+markdownlint-cli2-docker..................................................Passed
+trim trailing whitespace.................................................Passed
+fix end of files..........................................................Passed
+check yaml................................................................Passed
+check for merge conflicts.................................................Passed
+check for added large files...............................................Passed
+mixed line ending.........................................................Passed
+shfmt......................................................................Passed
+ShellCheck..................................................................Passed
+zizmor.....................................................................Passed
 ```
 
-All three should pass without errors. Docker will automatically pull the required container images on first run.
+All hooks should pass without errors. Docker will automatically pull the required container images on first run.
 
 ## Usage
 
@@ -133,7 +146,26 @@ git commit --no-verify
 
 ## Hook Configuration
 
-Hooks are defined in `.pre-commit-config.yaml` and run inside Docker containers. Here's what each hook does:
+Hooks are defined in `.pre-commit-config.yaml`. Here's what each hook does:
+
+### actionlint
+
+- **Purpose**: Lints GitHub Actions workflow YAML for syntax and logic errors
+- **Files checked**: `.github/workflows/*.yml`
+
+### gitleaks
+
+- **Purpose**: Scans staged changes for hardcoded secrets and credentials
+
+### pre-commit-hooks
+
+- **Purpose**: General-purpose file hygiene checks
+- **Includes**: trailing-whitespace, end-of-file-fixer, check-yaml, check-merge-conflict, check-added-large-files, mixed-line-ending
+
+### zizmor
+
+- **Purpose**: Audits GitHub Actions workflows for security issues (e.g. script injection, excessive permissions)
+- **Files checked**: `.github/workflows/*.yml`
 
 ### shellcheck
 
@@ -160,7 +192,7 @@ Detects:
   - `-ci`: Indent switch cases
 - **Docker image**: Runs in `mvdan/sh` container
 
-Matches the formatting used in CI (GitHub Actions checkshell.yml).
+Matches the formatting used in CI (GitHub Actions `linting.yml`).
 
 ### markdownlint-cli2
 
@@ -241,16 +273,19 @@ pre-commit run --all-files
 
 ### Slow first run of hooks
 
-Docker container images are large. The first run will pull required images (shellcheck, shfmt, markdownlint-cli2), which may take a few minutes.
+Docker container images are large. The first run will pull the required images (shfmt, markdownlint-cli2) and build the other hook environments (actionlint, gitleaks, shellcheck, zizmor), which may take a few minutes.
 
 **Solution**: Wait for initial pull to complete. Subsequent runs will be faster as images are cached locally.
 
 ## CI/CD Integration
 
-These same checks run in the GitHub Actions CI pipeline (`.github/workflows/checkshell.yml`):
+The shfmt, shellcheck, and markdownlint checks run in the GitHub Actions CI pipeline (`.github/workflows/linting.yml`):
 
 - **shfmt** job: Validates formatting matches the configured rules
 - **shellcheck** job: Validates shell scripts
+- **markdownlint** job: Validates Markdown files
+
+zizmor also runs as a required check against `.github/workflows/` (see [AGENTS.md](./AGENTS.md#code-quality)).
 
 Using pre-commit hooks locally ensures your changes pass CI checks before pushing.
 
