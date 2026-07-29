@@ -3,22 +3,11 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-      time: "09:30"
-      timezone: "America/Toronto"
+      interval: "monthly"
     groups:
-      github-official:
+      monthly-batch:
         patterns:
-          - "actions/*"
-        update-types:
-          - "minor"
-          - "patch"
-      docker:
-        patterns:
-          - "docker/*"
-        update-types:
-          - "minor"
-          - "patch"
+          - "*"
     pull-request-branch-name:
       separator: "/"
     commit-message:
@@ -30,7 +19,11 @@ updates:
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      monthly-batch:
+        patterns:
+          - "*"
     pull-request-branch-name:
       separator: "/"
     commit-message:
