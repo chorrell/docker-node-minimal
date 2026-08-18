@@ -1,6 +1,10 @@
+
+
 # docker-node-minimal
 
 A minimal Docker image with just Node.js.
+
+The `latest` tag supports `linux/amd64` and `linux/arm64`.
 
 ## Use the Docker Hub Image
 
