@@ -1,4 +1,5 @@
 node-v*/
+node-src/
 *.tar.xz
 SHASUMS256.txt
 SHASUMS256.txt.asc
