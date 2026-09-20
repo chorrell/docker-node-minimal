@@ -54,7 +54,10 @@ tar -Jxf "node-v$NODE_VERSION.tar.xz"
 # version bumps. The extracted tree's name (node-v$NODE_VERSION) is otherwise
 # embedded in absolute paths passed to the compiler, which defeats ccache
 # reuse between versions even for unchanged files.
-rm -rf node-src
+if [[ -d node-src ]]; then
+  echo "Removing pre-existing node-src/ directory (leftover from a previous build)"
+  rm -rf node-src
+fi
 mv "node-v$NODE_VERSION/" node-src
 cd node-src/
 ./configure --fully-static --enable-static --without-npm --without-intl
