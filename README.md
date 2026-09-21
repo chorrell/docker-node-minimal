@@ -76,3 +76,14 @@ docker build -t node-minimal .
 ```
 
 See [AGENTS.md](AGENTS.md) for the full development guide and [SETUP.md](SETUP.md) for local pre-commit hook setup.
+
+## Static builds and `--without-intl`
+
+`build.sh` configures Node with `--fully-static`, which appends `-static` to every link command in the generated makefiles. That includes build-time host tools and shared libraries that only work when linked dynamically, and upstream this remains broken ([nodejs/node#41497](https://github.com/nodejs/node/issues/41497); the fix proposed in [nodejs/node#30199](https://github.com/nodejs/node/pull/30199) was never merged). The build works today because:
+
+- `--without-intl` sets `v8_enable_i18n_support=0`, which keeps `gen-regexp-special-case` — a V8 host tool that segfaults when linked with `-static` ([nodejs/node#30180](https://github.com/nodejs/node/issues/30180)) — out of the default `make` dependency graph, so it is never built or run.
+- Node 18.0.0 removed the `test_crypto_engine` test fixture from the default build ([nodejs/node#41830](https://github.com/nodejs/node/pull/41830)). It is a shared library, and `-shared` cannot be combined with `-static` — the linker error in #41497. It is now only built when running the test suite.
+
+This repo previously worked around both by stripping `-static` from those targets' generated makefiles after `./configure`, as suggested in [nodejs/node#41497 (comment)](https://github.com/nodejs/node/issues/41497#issuecomment-1013137433). Since Node 18, neither target participates in the default build, so the patch was removed.
+
+If the static build fails again after dropping `--without-intl` — or after a future Node release reintroduces a shared library into the default build — expect a linker error like `crtbeginT.o: relocation ... can not be used when making a shared object` or a `gen-regexp-special-case` crash during `make`. The fix is to re-apply the patch: after `./configure`, strip `-static` from the affected generated makefiles (for example `out/tools/v8_gypfiles/gen-regexp-special-case.target.mk`) before running `make`.

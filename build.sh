@@ -60,9 +60,10 @@ if [[ -d node-src ]]; then
 fi
 mv "node-v$NODE_VERSION/" node-src
 cd node-src/
+# --without-intl keeps V8's gen-regexp-special-case host tool out of the
+# build (it crashes when statically linked), and Node 18+ no longer builds
+# the test_crypto_engine shared library by default. Neither target needs
+# its -static flag stripped anymore. See "Static builds and --without-intl"
+# in README.md before changing these flags.
 ./configure --fully-static --enable-static --without-npm --without-intl
-# See: https://github.com/nodejs/node/issues/41497#issuecomment-1013137433
-for i in out/tools/v8_gypfiles/gen-regexp-special-case.target.mk out/test_crypto_engine.target.mk; do
-  sed -i.bak 's/-static//g' "$i" || true
-done
 make -j"$(getconf _NPROCESSORS_ONLN)" V=0
