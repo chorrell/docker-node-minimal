@@ -50,10 +50,19 @@ curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.
 gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
 grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -
 tar -Jxf "node-v$NODE_VERSION.tar.xz"
-cd "node-v$NODE_VERSION/"
+# Build in a version-independent directory so ccache can hit across Node
+# version bumps. The extracted tree's name (node-v$NODE_VERSION) is otherwise
+# embedded in absolute paths passed to the compiler, which defeats ccache
+# reuse between versions even for unchanged files.
+if [[ -d node-src ]]; then
+  echo "Removing pre-existing node-src/ directory (leftover from a previous build)"
+  rm -rf node-src
+fi
+mv "node-v$NODE_VERSION/" node-src
+cd node-src/
 ./configure --fully-static --enable-static --without-npm --without-intl
 # See: https://github.com/nodejs/node/issues/41497#issuecomment-1013137433
 for i in out/tools/v8_gypfiles/gen-regexp-special-case.target.mk out/test_crypto_engine.target.mk; do
   sed -i.bak 's/-static//g' "$i" || true
 done
-make -j"$(getconf _NPROCESSORS_ONLN)" V=0 CFLAGS="-O3" CXXFLAGS="-O3"
+make -j"$(getconf _NPROCESSORS_ONLN)" V=0

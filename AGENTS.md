@@ -9,7 +9,7 @@ This repository builds minimal Node.js Docker images. To build and test locally:
 ./build.sh -n 20.10.0
 
 # Copy the compiled binary into the build context (expected by the Dockerfile)
-cp node-v20.10.0/out/Release/node node
+cp node-src/out/Release/node node
 
 # Test the generated binary
 docker build -t node-minimal .
@@ -22,9 +22,9 @@ The `build.sh` script compiles Node.js from source as a static binary:
 
 - **Usage:** `./build.sh -n NODE_VERSION`
 - **Example:** `./build.sh -n 20.10.0`
-- **Output:** Creates `node-v*/` directory with compiled Node.js binary
+- **Output:** Extracts to a version-independent `node-src/` directory and creates the compiled Node.js binary there. Building in a stable directory name (rather than `node-v$VERSION/`) lets ccache reuse compiled objects across Node version bumps, since unchanged files no longer get a different cache key just because the version changed.
 - **Configuration:** Uses `--fully-static --enable-static --without-npm --without-intl` flags
-- **Duration:** Compilation takes 10-30 minutes depending on system and Node.js version
+- **Duration:** Compilation takes 10-30 minutes on a cold cache; a warm ccache (e.g. a patch version bump) can be substantially faster
 
 ## Dockerfile
 

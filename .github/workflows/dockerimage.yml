@@ -66,7 +66,7 @@ jobs:
           which gcc
           ./build.sh -n "$LATEST_VERSION"
           ccache -s
-          cp "node-v${LATEST_VERSION}/out/Release/node" node
+          cp node-src/out/Release/node node
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
