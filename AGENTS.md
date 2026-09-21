@@ -31,7 +31,10 @@ The `build.sh` script compiles Node.js from source as a static binary:
 The minimal Dockerfile uses `FROM scratch` and copies only the Node.js binary:
 
 ```dockerfile
+# syntax=docker/dockerfile:1
 FROM scratch
+LABEL maintainer=christopher@horrell.ca
+LABEL org.opencontainers.image.source=https://github.com/chorrell/docker-node-minimal
 COPY --link node /bin/
 ENTRYPOINT ["/bin/node"]
 ```
@@ -124,12 +127,14 @@ Integration tests run in CI:
 
 ## Dependencies
 
-External dependencies (handled by build.sh):
+External dependencies:
 
-- curl - downloads Node.js sources and GPG keys
-- gpg - verifies GPG signatures
-- tar - extracts Node.js source
-- gcc/make - compiles Node.js from source
+- curl - downloads Node.js sources and GPG keys (build.sh)
+- gpg - verifies GPG signatures (build.sh)
+- tar - extracts Node.js source (build.sh)
+- gcc/make - compiles Node.js from source (build.sh)
+- jq - parses the Node.js release index (check-missing-versions.sh and CI workflows)
+- bats - runs the unit test suite (test/check-missing-versions.bats)
 - Docker - for building and testing Docker image
 
 ## Versioning
