@@ -65,6 +65,22 @@ To run a script, mount it into the container and pass its path:
 docker run --rm -v "$PWD:/app" -w /app chorrell/node-minimal:latest app.js
 ```
 
+## Verifying the Image
+
+Every published image and the compiled Node.js binary are signed with a GitHub artifact attestation: an in-toto provenance statement signed with a Sigstore-issued certificate that binds the artifact to the repository, workflow run, and commit that produced it. Verified with the GitHub CLI:
+
+```sh
+gh attestation verify oci://ghcr.io/chorrell/node-minimal:latest -R chorrell/docker-node-minimal
+gh attestation verify oci://docker.io/chorrell/node-minimal:latest -R chorrell/docker-node-minimal
+```
+
+The images additionally carry Docker Buildx provenance and an SBOM embedded in the image, inspectable with OCI tooling:
+
+```sh
+docker buildx imagetools inspect ghcr.io/chorrell/node-minimal:latest --format "{{json .Provenance}}"
+docker buildx imagetools inspect ghcr.io/chorrell/node-minimal:latest --format "{{json .SBOM}}"
+```
+
 ## Building from Source
 
 Node.js is compiled from source as a fully static binary by `build.sh`, then copied into the scratch image by the [Dockerfile](Dockerfile):

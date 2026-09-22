@@ -54,6 +54,7 @@ ENTRYPOINT ["/bin/node"]
 - Checks for new Node.js releases (via `check-missing-versions.sh`) unless a specific version is provided
 - Builds and publishes to Docker Hub and GitHub Container Registry
 - Tags with exact version, major version, `current`, and `latest`
+- Signs the compiled Node.js binary and the merged image indexes with GitHub artifact attestations (`actions/attest@v4`, pinned SHA) for GHCR and Docker Hub
 
 ### linting.yml
 
