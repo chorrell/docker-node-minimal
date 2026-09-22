@@ -23,7 +23,7 @@ The `build.sh` script compiles Node.js from source as a static binary:
 - **Usage:** `./build.sh -n NODE_VERSION`
 - **Example:** `./build.sh -n 20.10.0`
 - **Output:** Extracts to a version-independent `node-src/` directory and creates the compiled Node.js binary there. Building in a stable directory name (rather than `node-v$VERSION/`) lets ccache reuse compiled objects across Node version bumps, since unchanged files no longer get a different cache key just because the version changed.
-- **Configuration:** Uses `--fully-static --enable-static --without-npm --without-intl` flags. `--without-intl` is also what keeps the static build working without patching generated makefiles; see "Static builds and `--without-intl`" in [README.md](./README.md)
+- **Configuration:** Uses `--fully-static --without-npm --without-intl` flags. `--without-intl` is also what keeps the static build working without patching generated makefiles; see "Static builds and `--without-intl`" in [README.md](./README.md)
 - **Duration:** Compilation takes 10-30 minutes on a cold cache; a warm ccache (e.g. a patch version bump) can be substantially faster
 
 ## Dockerfile

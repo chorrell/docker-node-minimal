@@ -65,5 +65,5 @@ cd node-src/
 # the test_crypto_engine shared library by default. Neither target needs
 # its -static flag stripped anymore. See "Static builds and --without-intl"
 # in README.md before changing these flags.
-./configure --fully-static --enable-static --without-npm --without-intl
+./configure --fully-static --without-npm --without-intl
 make -j"$(getconf _NPROCESSORS_ONLN)" V=0
