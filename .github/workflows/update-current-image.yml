@@ -74,6 +74,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     if: needs.check_version.outputs.NODE_VERSION
     env:
@@ -112,6 +114,11 @@ jobs:
           ./build.sh -n "$NODE_VERSION"
           ccache -s
           cp node-src/out/Release/node node
+
+      - name: Attest Node binary
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: node
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
@@ -161,7 +168,10 @@ jobs:
     needs: [check_version, build]
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
+      id-token: write
+      attestations: write
     env:
       NODE_VERSION: ${{ needs.check_version.outputs.NODE_VERSION }}
 
@@ -198,6 +208,8 @@ jobs:
             -t "${REPO}:latest" \
             "${REPO}:build-${RUN_ID}-amd64" \
             "${REPO}:build-${RUN_ID}-arm64"
+          DOCKERHUB_INDEX_DIGEST=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${REPO}:${NODE_VERSION}")
+          echo "DOCKERHUB_INDEX_DIGEST=${DOCKERHUB_INDEX_DIGEST}" >> "$GITHUB_ENV"
 
       - name: Create GHCR multi-arch manifests
         env:
@@ -210,6 +222,24 @@ jobs:
             -t "${GHCR_IMAGE}:latest" \
             "${GHCR_IMAGE}:build-${RUN_ID}-amd64" \
             "${GHCR_IMAGE}:build-${RUN_ID}-arm64"
+          GHCR_INDEX_DIGEST=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${GHCR_IMAGE}:${NODE_VERSION}")
+          echo "GHCR_INDEX_DIGEST=${GHCR_INDEX_DIGEST}" >> "$GITHUB_ENV"
+
+      - name: Attest GHCR image
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ghcr.io/chorrell/node-minimal
+          subject-digest: ${{ env.GHCR_INDEX_DIGEST }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest Docker Hub image
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ env.DOCKERHUB_INDEX_DIGEST }}
+          push-to-registry: false
+          create-storage-record: false
 
       - name: Inspect manifest
         env:
