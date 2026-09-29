@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       node_version:
-        description: 'Node.js version to build (e.g., 20.10.0). Leave empty to auto-detect latest.'
+        description: 'Node.js version to build (e.g., 20.10.0). Leave empty to auto-detect the Current and Active LTS releases.'
         required: false
         type: string
 
@@ -25,49 +25,43 @@ jobs:
   check_version:
     runs-on: ubuntu-slim
     outputs:
-      NODE_VERSION: ${{ steps.get_version.outputs.NODE_VERSION }}
+      TARGETS: ${{ steps.get_targets.outputs.TARGETS }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Validate and Get NODE_VERSION
-        id: get_version
+      - name: Get build targets
+        id: get_targets
         env:
           GITHUB_EVENT_INPUTS_NODE_VERSION: ${{ github.event.inputs.node_version }}
         run: |
           if [[ -n "${GITHUB_EVENT_INPUTS_NODE_VERSION}" ]]; then
-            INPUT_VERSION="${GITHUB_EVENT_INPUTS_NODE_VERSION}"
-            if ! [[ $INPUT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "Error: Invalid version format '$INPUT_VERSION'. Expected format: X.Y.Z (e.g., 20.10.0)" >&2
-              exit 1
-            fi
-            NODE_VERSION="$INPUT_VERSION"
+            TARGETS=$(./get-build-targets.sh -n "${GITHUB_EVENT_INPUTS_NODE_VERSION}")
           else
-            NODE_VERSION=$(./check-missing-versions.sh | tail -1)
+            TARGETS=$(./get-build-targets.sh)
           fi
-          echo "NODE_VERSION=$NODE_VERSION" >> "$GITHUB_OUTPUT"
-          if [[ -n "$NODE_VERSION" ]]; then
-            echo "Building Node.js version: $NODE_VERSION"
-          else
+          echo "TARGETS=$TARGETS" >> "$GITHUB_OUTPUT"
+          if [[ "$TARGETS" == "[]" ]]; then
             echo "No new Node.js versions to build"
+          else
+            jq -r '.[] | "Building Node.js version: \(.version) (tags: \(.tags | join(", ")))"' <<< "$TARGETS"
           fi
 
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          - ubuntu-26.04
-          - ubuntu-26.04-arm
+        target: ${{ fromJSON(needs.check_version.outputs.TARGETS) }}
         platform:
           - amd64
           - arm64
-        exclude:
-          - os: ubuntu-26.04
-            platform: arm64
-          - os: ubuntu-26.04-arm
-            platform: amd64
+        include:
+          - platform: amd64
+            os: ubuntu-26.04
+          - platform: arm64
+            os: ubuntu-26.04-arm
 
     needs: check_version
     runs-on: ${{ matrix.os }}
@@ -77,9 +71,10 @@ jobs:
       id-token: write
       attestations: write
 
-    if: needs.check_version.outputs.NODE_VERSION
+    if: needs.check_version.outputs.TARGETS != '[]'
     env:
-      NODE_VERSION: ${{needs.check_version.outputs.NODE_VERSION}}
+      NODE_VERSION: ${{ matrix.target.version }}
+      MAJOR_VERSION: ${{ matrix.target.major }}
 
     steps:
       - name: Checkout
@@ -90,7 +85,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
         with:
-          key: ${{ matrix.os }}-${{ matrix.platform }}
+          key: ${{ matrix.os }}-${{ matrix.platform }}-${{ matrix.target.major }}
           max-size: 10G
           job-summary: Ccache Statistics
           install: yes
@@ -102,11 +97,8 @@ jobs:
           ccache --set-config=hash_dir=false
           ccache -p
 
-      - name: Set and Display Versions
-        run: |
-          MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)
-          echo "MAJOR_VERSION=$MAJOR_VERSION" >> "$GITHUB_ENV"
-          echo "Building Node.js version: $NODE_VERSION (major: $MAJOR_VERSION)"
+      - name: Display Versions
+        run: echo "Building Node.js version $NODE_VERSION (major $MAJOR_VERSION)"
 
       - name: Build Node
         run: |
@@ -145,8 +137,8 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           load: true
           tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.target.major }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target.major }}-${{ matrix.platform }}
 
       - name: Test Image
         run: docker run --rm "${IMAGE_NAME}-${NODE_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"
@@ -160,20 +152,25 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:build-${{ github.run_id }}-${{ matrix.platform }}
-            ${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-${{ matrix.platform }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:build-${{ github.run_id }}-${{ env.NODE_VERSION }}-${{ matrix.platform }}
+            ${{ env.GHCR_IMAGE }}:build-${{ github.run_id }}-${{ env.NODE_VERSION }}-${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.target.major }}-${{ matrix.platform }}
 
   merge:
     needs: [check_version, build]
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.check_version.outputs.TARGETS) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+    if: needs.check_version.outputs.TARGETS != '[]'
     env:
-      NODE_VERSION: ${{ needs.check_version.outputs.NODE_VERSION }}
+      NODE_VERSION: ${{ matrix.target.version }}
+      TAGS: ${{ join(matrix.target.tags, ' ') }}
 
     steps:
       - name: Set up Docker Buildx
@@ -192,22 +189,20 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set major version
-        run: echo "MAJOR_VERSION=$(echo "$NODE_VERSION" | cut -d'.' -f 1)" >> "$GITHUB_ENV"
-
       - name: Create DockerHub multi-arch manifests
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           RUN_ID: ${{ github.run_id }}
         run: |
           REPO="${DOCKERHUB_USERNAME}/${IMAGE_NAME}"
+          TAG_ARGS=()
+          for TAG in $TAGS; do
+            TAG_ARGS+=(-t "${REPO}:${TAG}")
+          done
           docker buildx imagetools create \
-            -t "${REPO}:${NODE_VERSION}" \
-            -t "${REPO}:${MAJOR_VERSION}" \
-            -t "${REPO}:current" \
-            -t "${REPO}:latest" \
-            "${REPO}:build-${RUN_ID}-amd64" \
-            "${REPO}:build-${RUN_ID}-arm64"
+            "${TAG_ARGS[@]}" \
+            "${REPO}:build-${RUN_ID}-${NODE_VERSION}-amd64" \
+            "${REPO}:build-${RUN_ID}-${NODE_VERSION}-arm64"
           DOCKERHUB_INDEX_DIGEST=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${REPO}:${NODE_VERSION}")
           echo "DOCKERHUB_INDEX_DIGEST=${DOCKERHUB_INDEX_DIGEST}" >> "$GITHUB_ENV"
 
@@ -215,13 +210,14 @@ jobs:
         env:
           RUN_ID: ${{ github.run_id }}
         run: |
+          TAG_ARGS=()
+          for TAG in $TAGS; do
+            TAG_ARGS+=(-t "${GHCR_IMAGE}:${TAG}")
+          done
           docker buildx imagetools create \
-            -t "${GHCR_IMAGE}:${NODE_VERSION}" \
-            -t "${GHCR_IMAGE}:${MAJOR_VERSION}" \
-            -t "${GHCR_IMAGE}:current" \
-            -t "${GHCR_IMAGE}:latest" \
-            "${GHCR_IMAGE}:build-${RUN_ID}-amd64" \
-            "${GHCR_IMAGE}:build-${RUN_ID}-arm64"
+            "${TAG_ARGS[@]}" \
+            "${GHCR_IMAGE}:build-${RUN_ID}-${NODE_VERSION}-amd64" \
+            "${GHCR_IMAGE}:build-${RUN_ID}-${NODE_VERSION}-arm64"
           GHCR_INDEX_DIGEST=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${GHCR_IMAGE}:${NODE_VERSION}")
           echo "GHCR_INDEX_DIGEST=${GHCR_INDEX_DIGEST}" >> "$GITHUB_ENV"
 

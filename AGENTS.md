@@ -43,17 +43,17 @@ ENTRYPOINT ["/bin/node"]
 
 ### dockerimage.yml
 
-- Builds Docker images on PR changes to `Dockerfile`, `build.sh`, or the workflow file itself
+- Builds Docker images on PR changes to `Dockerfile`, `build.sh`, `get-build-targets.sh`, or the workflow file itself
 - Tests on both linux/amd64 and linux/arm64 platforms
-- Uses ccache for faster compilation
-- Automatically detects latest Node.js version
+- Uses ccache for faster compilation, with a separate cache per Node.js major version
+- Builds both the latest Current and Active LTS releases (via `get-build-targets.sh -a`)
 
 ### update-current-image.yml
 
 - Runs daily on schedule (cron: `30 0 * * *`), or manually via `workflow_dispatch` with an optional `node_version` input
-- Checks for new Node.js releases (via `check-missing-versions.sh`) unless a specific version is provided
-- Builds and publishes to Docker Hub and GitHub Container Registry
-- Tags with exact version, major version, `current`, and `latest`
+- Resolves build targets (via `get-build-targets.sh`): the latest Current and Active LTS releases not yet on Docker Hub, or the provided version
+- Builds each target for both platforms and publishes to Docker Hub and GitHub Container Registry
+- Tags each target with the tags computed by `get-build-targets.sh` (see Versioning)
 - Signs the compiled Node.js binary and the merged image indexes with GitHub artifact attestations (`actions/attest@v4`, pinned SHA) for GHCR and Docker Hub
 
 ### linting.yml
@@ -75,16 +75,17 @@ Compiles Node.js statically:
 - Configures with fully-static compilation flags
 - Compiles with optimal parallelization
 
-### check-missing-versions.sh
+### get-build-targets.sh
 
-Checks for new Node.js versions to build:
+Resolves which Node.js versions to build and how to tag them:
 
-- Queries Node.js distribution API (nodejs.org/dist/index.json)
+- Queries the Node.js distribution API (nodejs.org/dist/index.json)
 - Filters out known broken builds (SKIP_VERSIONS array)
-- Checks Docker Hub API to find truly missing versions (does not count against pull rate limits)
-- Returns newest missing version(s) sorted semantically
-- Usage: `./check-missing-versions.sh -l 5` (limit to 5 versions)
-- Runs in parallel for efficiency
+- Picks the latest Current release and the latest Active LTS release, ordered by version (not release date)
+- Checks Docker Hub API to drop targets that are already published (does not count against pull rate limits)
+- Prints a JSON array of `{version, major, tags}` used as the workflow build matrix
+- Usage: `./get-build-targets.sh` (missing targets), `./get-build-targets.sh -a` (all targets), `./get-build-targets.sh -n 24.21.0` (tags for a specific version)
+- `NODE_INDEX_URL` overrides the release index URL (e.g. a `file://` fixture in tests)
 
 ## Code Quality
 
@@ -106,16 +107,17 @@ Checks for new Node.js versions to build:
 
 ### Unit Tests
 
-Comprehensive Bats test suite for check-missing-versions.sh:
+Bats test suite for get-build-targets.sh:
 
-- Run tests: `bats test/check-missing-versions.bats`
-- 22 tests covering:
-  - Input validation (LIMIT parameter)
+- Run tests: `bats test/get-build-targets.bats`
+- Tag resolution tests run offline against fixture release indexes in `test/fixtures/`, covering:
+  - Input validation (`-n` version format, unknown and skipped versions)
   - Help/usage output
-  - Script execution with various parameters
-  - Output format validation (semantic versioning)
-  - SKIP_VERSIONS filtering
-  - Docker Hub API integration
+  - Current and Active LTS target selection and tags
+  - `latest` ordering by version, and the gap where no Current release exists
+  - SKIP_VERSIONS fallback
+  - Tags for manually requested versions
+- One integration test runs against the live release index and Docker Hub
 
 ### Integration Tests
 
@@ -133,18 +135,20 @@ External dependencies:
 - gpg - verifies GPG signatures (build.sh)
 - tar - extracts Node.js source (build.sh)
 - gcc/make - compiles Node.js from source (build.sh)
-- jq - parses the Node.js release index (check-missing-versions.sh and CI workflows)
-- bats - runs the unit test suite (test/check-missing-versions.bats)
+- jq - parses the Node.js release index (get-build-targets.sh and CI workflows)
+- bats - runs the unit test suite (test/get-build-targets.bats)
 - Docker - for building and testing Docker image
 
 ## Versioning
 
 Images are tagged with:
 
-- Exact version: `20.10.0`
-- Major version: `20`
-- Latest: `latest`
-- Current: `current` (the latest Node.js "Current" release)
+- Exact version: `24.21.0` (every build)
+- Major version: `24` (newest release of that major)
+- LTS codename: `krypton` (newest release of that LTS line)
+- LTS: `lts` (newest Active LTS release)
+- Current: `current` (the latest Node.js "Current" release; not moved while no Current line exists)
+- Latest: `latest` (highest version overall, usually the same as `current`)
 
 Published to:
 

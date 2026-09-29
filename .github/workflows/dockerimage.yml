@@ -5,6 +5,7 @@ on:
     paths:
       - "Dockerfile"
       - "build.sh"
+      - "get-build-targets.sh"
       - ".github/workflows/dockerimage.yml"
 
 concurrency:
@@ -18,22 +19,40 @@ permissions:
   contents: read
 
 jobs:
+  check_version:
+    runs-on: ubuntu-slim
+    outputs:
+      TARGETS: ${{ steps.get_targets.outputs.TARGETS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Get build targets
+        id: get_targets
+        run: |
+          TARGETS=$(./get-build-targets.sh -a)
+          echo "TARGETS=$TARGETS" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: check_version
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          - ubuntu-26.04
-          - ubuntu-26.04-arm
+        target: ${{ fromJSON(needs.check_version.outputs.TARGETS) }}
         platform:
           - amd64
           - arm64
-        exclude:
-          - os: ubuntu-26.04
-            platform: arm64
-          - os: ubuntu-26.04-arm
-            platform: amd64
+        include:
+          - platform: amd64
+            os: ubuntu-26.04
+          - platform: arm64
+            os: ubuntu-26.04-arm
 
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_VERSION: ${{ matrix.target.version }}
 
     steps:
       - name: Checkout
@@ -44,7 +63,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
         with:
-          key: ${{ matrix.os }}-${{ matrix.platform }}
+          key: ${{ matrix.os }}-${{ matrix.platform }}-${{ matrix.target.major }}
           max-size: 10G
           job-summary: Ccache Statistics
           install: yes
@@ -56,17 +75,14 @@ jobs:
           ccache --set-config=hash_dir=false
           ccache -p
 
-      - name: Get latest node version
-        run: echo "LATEST_VERSION=$(curl -fsSLo- --compressed https://nodejs.org/dist/index.json | jq '.[].version' | tr -d '"' | tr -d 'v' | head -1)" >> "$GITHUB_ENV"
-
       - name: Display Node Version
         run: |
-          echo "Building Node.js version: $LATEST_VERSION"
+          echo "Building Node.js version: $NODE_VERSION"
 
       - name: Build Node
         run: |
           which gcc
-          ./build.sh -n "$LATEST_VERSION"
+          ./build.sh -n "$NODE_VERSION"
           ccache -s
           cp node-src/out/Release/node node
 
@@ -79,9 +95,9 @@ jobs:
           context: .
           platforms: linux/${{ matrix.platform }}
           load: true
-          tags: ${{ env.IMAGE_NAME }}-${{ env.LATEST_VERSION }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}-${{ env.NODE_VERSION }}
+          cache-from: type=gha,scope=${{ matrix.target.major }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target.major }}-${{ matrix.platform }}
 
       - name: Test Image
-        run: docker run --rm "${IMAGE_NAME}-${LATEST_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"
+        run: docker run --rm "${IMAGE_NAME}-${NODE_VERSION}" -e "console.log('Hello from Node.js ' + process.version)"
