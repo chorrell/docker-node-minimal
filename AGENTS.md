@@ -144,7 +144,7 @@ Images are tagged with:
 - Exact version: `20.10.0`
 - Major version: `20`
 - Latest: `latest`
-- Current: `current` (always latest daily build)
+- Current: `current` (the latest Node.js "Current" release)
 
 Published to:
 
