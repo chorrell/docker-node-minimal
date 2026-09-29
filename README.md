@@ -12,7 +12,7 @@ Every published build is available from both registries with the following tags:
 | --- | ----------- |
 | `20.10.0` | Exact Node.js version |
 | `20` | Major version (latest release of that major) |
-| `current` | Always the latest daily build |
+| `current` | The latest Node.js [Current](https://nodejs.org/en/about/previous-releases) release |
 | `latest` | Most recent release |
 
 ## Use the Docker Hub Image
