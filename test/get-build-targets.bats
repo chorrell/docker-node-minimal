@@ -2,14 +2,17 @@
 
 # Test suite for get-build-targets.sh
 #
-# Tests run against fixture release indexes (via NODE_INDEX_URL) with -a, so
-# they don't depend on the live Node.js release index or Docker Hub.
+# Tests run against fixture release indexes and schedules (via NODE_INDEX_URL,
+# NODE_SCHEDULE_URL, and TODAY) with -a, so they don't depend on the live
+# Node.js release data or Docker Hub.
 
 SCRIPT="${BATS_TEST_DIRNAME}/../get-build-targets.sh"
 FIXTURES="${BATS_TEST_DIRNAME}/fixtures"
 
 use_index() {
   export NODE_INDEX_URL="file://${FIXTURES}/$1"
+  export NODE_SCHEDULE_URL="file://${FIXTURES}/schedule.json"
+  export TODAY="${2:-2026-09-28}"
 }
 
 # Print the space-separated tags for a version from the script's JSON output.
@@ -69,11 +72,11 @@ tags_for() {
 # Auto-detected Targets
 # ============================================================================
 
-@test "builds the Current and Active LTS releases" {
+@test "builds the Current and all supported LTS releases" {
   use_index index-current.json
   run bash "$SCRIPT" -a
   [ "$status" -eq 0 ]
-  [ "$(jq -r '[.[].version] | sort | join(" ")' <<< "$output")" = "24.21.0 26.10.0" ]
+  [ "$(jq -r '[.[].version] | sort | join(" ")' <<< "$output")" = "22.23.3 24.21.0 26.10.0" ]
 }
 
 @test "Current release is tagged current and latest" {
@@ -90,12 +93,26 @@ tags_for() {
   [ "$(tags_for 24.21.0)" = "24.21.0 24 krypton lts" ]
 }
 
-@test "maintenance LTS and EOL lines are not built" {
+@test "Maintenance LTS release is tagged its major and codename" {
   use_index index-current.json
   run bash "$SCRIPT" -a
   [ "$status" -eq 0 ]
-  [ -z "$(tags_for 22.23.3)" ]
+  [ "$(tags_for 22.23.3)" = "22.23.3 22 jod" ]
+}
+
+@test "end-of-life lines are not built" {
+  use_index index-current.json
+  run bash "$SCRIPT" -a
+  [ "$status" -eq 0 ]
+  [ -z "$(tags_for 20.20.2)" ]
   [ -z "$(tags_for 25.9.0)" ]
+}
+
+@test "an LTS line stops being built once it reaches end-of-life" {
+  use_index index-current.json 2027-04-30
+  run bash "$SCRIPT" -a
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '[.[].version] | sort | join(" ")' <<< "$output")" = "24.21.0 26.10.0" ]
 }
 
 @test "latest is chosen by version, not release date" {
@@ -111,8 +128,9 @@ tags_for() {
   use_index index-no-current.json
   run bash "$SCRIPT" -a
   [ "$status" -eq 0 ]
-  [ "$(jq length <<< "$output")" -eq 1 ]
+  [ "$(jq -r '[.[].version] | sort | join(" ")' <<< "$output")" = "24.21.0 26.11.0" ]
   [ "$(tags_for 26.11.0)" = "26.11.0 26 lithium lts latest" ]
+  [ "$(tags_for 24.21.0)" = "24.21.0 24 krypton" ]
   [[ ! "$output" =~ \"current\" ]]
 }
 
@@ -163,7 +181,7 @@ tags_for() {
 # ============================================================================
 
 @test "script resolves targets from the live release index and Docker Hub" {
-  unset NODE_INDEX_URL
+  unset NODE_INDEX_URL NODE_SCHEDULE_URL TODAY
   run bash "$SCRIPT"
   [ "$status" -eq 0 ]
   jq -e 'type == "array"' <<< "$output"

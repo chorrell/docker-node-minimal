@@ -7,7 +7,7 @@ usage() {
   cat << USAGE
 Usage: $0 [-n <VERSION>] [-a]
     -n <VERSION> Resolve the tags for a specific Node.js version (e.g. 20.10.0)
-                 instead of auto-detecting the Current and Active LTS releases
+                 instead of auto-detecting the Current and supported LTS releases
     -a           Include targets that are already published to Docker Hub
     -h help
 
@@ -21,8 +21,11 @@ USAGE
   exit 1
 }
 
-# The Node.js release index. Overridable (e.g. with a file:// URL) for tests.
+# The Node.js release index and release schedule (for end-of-life dates).
+# Overridable (e.g. with file:// URLs) for tests, along with today's date.
 NODE_INDEX_URL="${NODE_INDEX_URL:-https://nodejs.org/dist/index.json}"
+NODE_SCHEDULE_URL="${NODE_SCHEDULE_URL:-https://raw.githubusercontent.com/nodejs/Release/main/schedule.json}"
+TODAY="${TODAY:-$(date -u +%Y-%m-%d)}"
 
 # Don't build these versions: the static builds are broken.
 # These versions fail to compile as static binaries due to compatibility issues
@@ -132,7 +135,9 @@ SKIP_VERSIONS_JSON=$(echo "$SKIP_VERSIONS" | jq -R . | jq -s .)
 #   Current  - the highest version, but only while its line is not yet LTS.
 #              Between a major entering LTS and the next major shipping there
 #              is no Current release, and the `current` tag is left untouched.
-#   LTS      - the highest version with an LTS codename (the Active LTS line)
+#   LTS      - the highest version of each LTS line (codename) whose major
+#              has not reached end-of-life in the release schedule. This covers
+#              both the Active LTS and Maintenance LTS lines.
 #
 # Tags for a release:
 #   <version>  always
@@ -142,9 +147,13 @@ SKIP_VERSIONS_JSON=$(echo "$SKIP_VERSIONS" | jq -R . | jq -s .)
 #   current    if it is the Current release
 #   latest     if it is the highest version overall
 # shellcheck disable=SC2016 # $vars below are jq variables, not shell
+SCHEDULE=$(curl -fsSL --compressed "$NODE_SCHEDULE_URL")
 TARGETS=$(curl -fsSL --compressed "$NODE_INDEX_URL" |
-  jq -c --argjson skip "$SKIP_VERSIONS_JSON" --arg version "$VERSION" '
+  jq -c --argjson skip "$SKIP_VERSIONS_JSON" --arg version "$VERSION" \
+    --argjson schedule "$SCHEDULE" --arg today "$TODAY" '
     def major: split(".")[0];
+    # A major without a schedule entry is assumed to be supported.
+    def supported: ($schedule["v" + (.version | major)].end // "9999-12-31") > $today;
 
     [.[] | {version: (.version | ltrimstr("v")), lts}
       | select(.version | IN($skip[]) | not)]
@@ -167,7 +176,10 @@ TARGETS=$(curl -fsSL --compressed "$NODE_INDEX_URL" |
       if $version != "" then
         [$all[] | select(.version == $version)]
       else
-        [$latest, $active_lts] | map(select(. != null)) | unique_by(.version)
+        [$latest]
+        + [$all | map(select(.lts != false)) | group_by(.lts)[]
+            | max_by(.version | split(".") | map(tonumber)) | select(supported)]
+        | unique_by(.version)
       end
       | map({version, major: (.version | major), tags: tags})
   ')

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       node_version:
-        description: 'Node.js version to build (e.g., 20.10.0). Leave empty to auto-detect the Current and Active LTS releases.'
+        description: 'Node.js version to build (e.g., 20.10.0). Leave empty to auto-detect the Current and supported LTS releases.'
         required: false
         type: string
 

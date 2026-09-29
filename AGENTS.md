@@ -46,12 +46,12 @@ ENTRYPOINT ["/bin/node"]
 - Builds Docker images on PR changes to `Dockerfile`, `build.sh`, `get-build-targets.sh`, or the workflow file itself
 - Tests on both linux/amd64 and linux/arm64 platforms
 - Uses ccache for faster compilation, with a separate cache per Node.js major version
-- Builds both the latest Current and Active LTS releases (via `get-build-targets.sh -a`)
+- Builds the latest Current release and the latest release of every supported LTS line (via `get-build-targets.sh -a`)
 
 ### update-current-image.yml
 
 - Runs daily on schedule (cron: `30 0 * * *`), or manually via `workflow_dispatch` with an optional `node_version` input
-- Resolves build targets (via `get-build-targets.sh`): the latest Current and Active LTS releases not yet on Docker Hub, or the provided version
+- Resolves build targets (via `get-build-targets.sh`): the latest Current release and the latest release of every supported LTS line, if not yet on Docker Hub, or the provided version
 - Builds each target for both platforms and publishes to Docker Hub and GitHub Container Registry
 - Tags each target with the tags computed by `get-build-targets.sh` (see Versioning)
 - Signs the compiled Node.js binary and the merged image indexes with GitHub artifact attestations (`actions/attest@v4`, pinned SHA) for GHCR and Docker Hub
@@ -81,11 +81,12 @@ Resolves which Node.js versions to build and how to tag them:
 
 - Queries the Node.js distribution API (nodejs.org/dist/index.json)
 - Filters out known broken builds (SKIP_VERSIONS array)
-- Picks the latest Current release and the latest Active LTS release, ordered by version (not release date)
+- Queries the Node.js release schedule (nodejs/Release schedule.json) for end-of-life dates
+- Picks the latest Current release and the latest release of each LTS line that hasn't reached end-of-life, ordered by version (not release date)
 - Checks Docker Hub API to drop targets that are already published (does not count against pull rate limits)
 - Prints a JSON array of `{version, major, tags}` used as the workflow build matrix
 - Usage: `./get-build-targets.sh` (missing targets), `./get-build-targets.sh -a` (all targets), `./get-build-targets.sh -n 24.21.0` (tags for a specific version)
-- `NODE_INDEX_URL` overrides the release index URL (e.g. a `file://` fixture in tests)
+- `NODE_INDEX_URL`, `NODE_SCHEDULE_URL`, and `TODAY` override the release index, release schedule, and current date (e.g. `file://` fixtures in tests)
 
 ## Code Quality
 
@@ -113,7 +114,8 @@ Bats test suite for get-build-targets.sh:
 - Tag resolution tests run offline against fixture release indexes in `test/fixtures/`, covering:
   - Input validation (`-n` version format, unknown and skipped versions)
   - Help/usage output
-  - Current and Active LTS target selection and tags
+  - Current, Active LTS, and Maintenance LTS target selection and tags
+  - End-of-life LTS lines being dropped
   - `latest` ordering by version, and the gap where no Current release exists
   - SKIP_VERSIONS fallback
   - Tags for manually requested versions
