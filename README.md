@@ -6,7 +6,7 @@ The image starts from `scratch` and contains only a fully static Node.js binary 
 
 ## Tags
 
-Images are built daily for the latest Node.js [Current](https://nodejs.org/en/about/previous-releases) release and the latest release of every supported LTS line (Active and Maintenance LTS). Every build is available from both registries with the following tags:
+Images are published for the latest Node.js [Current](https://nodejs.org/en/about/previous-releases) release and the latest release of every supported LTS line (Active and Maintenance LTS). A daily job checks for new releases and builds any that haven't been published yet. Every build is available from both registries with the following tags:
 
 | Tag | Description |
 | --- | ----------- |
