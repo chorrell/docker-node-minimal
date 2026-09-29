@@ -6,14 +6,20 @@ The image starts from `scratch` and contains only a fully static Node.js binary 
 
 ## Tags
 
-Every published build is available from both registries with the following tags:
+Images are published for the latest Node.js [Current](https://nodejs.org/en/about/previous-releases) release and the latest release of every supported LTS line (Active and Maintenance LTS). A daily job checks for new releases and builds any that haven't been published yet. Every build is available from both registries with the following tags:
 
 | Tag | Description |
 | --- | ----------- |
-| `20.10.0` | Exact Node.js version |
-| `20` | Major version (latest release of that major) |
-| `current` | The latest Node.js [Current](https://nodejs.org/en/about/previous-releases) release |
-| `latest` | Most recent release |
+| `24.21.0` | Exact Node.js version |
+| `24` | Major version (latest release of that major) |
+| `krypton` | LTS codename (latest release of that LTS line) |
+| `lts` | The latest Active LTS release |
+| `current` | The latest Node.js Current release |
+| `latest` | The highest Node.js version published |
+
+LTS lines are built until they reach [end-of-life](https://github.com/nodejs/release#release-schedule). After that, their major and codename tags stop receiving updates, so switch to `lts` or a newer major to keep getting security fixes.
+
+`latest` is usually the same image as `current`. When a major version has just entered LTS and the next major has not been released yet, there is no Current release: `latest` follows the new LTS release and `current` stays on the last Current release until the next major ships.
 
 ## Use the Docker Hub Image
 
