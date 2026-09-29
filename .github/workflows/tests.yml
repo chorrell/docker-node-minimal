@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - "get-build-targets.sh"
+      - "test/**"
+      - ".github/workflows/tests.yml"
+  # Weekly run so the live integration test catches upstream changes to the
+  # Node.js release index or schedule before they break the daily publish.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install bats
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
+
+      - name: Run tests
+        run: bats test/get-build-targets.bats

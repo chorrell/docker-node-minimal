@@ -56,6 +56,11 @@ ENTRYPOINT ["/bin/node"]
 - Tags each target with the tags computed by `get-build-targets.sh` (see Versioning)
 - Signs the compiled Node.js binary and the merged image indexes with GitHub artifact attestations (`actions/attest@v4`, pinned SHA) for GHCR and Docker Hub
 
+### tests.yml
+
+- Runs the Bats test suite on PR changes to `get-build-targets.sh`, `test/`, or the workflow file itself
+- Also runs weekly on schedule (cron: `0 6 * * 1`) and manually via `workflow_dispatch`, so the live integration test catches upstream changes to the Node.js release index or schedule
+
 ### linting.yml
 
 - Runs on all pull requests
@@ -111,6 +116,7 @@ Resolves which Node.js versions to build and how to tag them:
 Bats test suite for get-build-targets.sh:
 
 - Run tests: `bats test/get-build-targets.bats`
+- Runs in CI via `tests.yml` (on PRs and weekly)
 - Tag resolution tests run offline against fixture release indexes in `test/fixtures/`, covering:
   - Input validation (`-n` version format, unknown and skipped versions)
   - Help/usage output
