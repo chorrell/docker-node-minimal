@@ -36,6 +36,7 @@ jobs:
           echo "TARGETS=$TARGETS" >> "$GITHUB_OUTPUT"
 
   build:
+    name: build (${{ matrix.target.version }}, ${{ matrix.platform }})
     needs: check_version
     strategy:
       fail-fast: false

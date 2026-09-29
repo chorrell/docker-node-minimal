@@ -11,11 +11,13 @@ Images are built daily for the latest Node.js [Current](https://nodejs.org/en/ab
 | Tag | Description |
 | --- | ----------- |
 | `24.21.0` | Exact Node.js version |
-| `24` | Major version (latest release of that major) |
-| `krypton` | LTS codename (latest release of that LTS line) |
+| `24` | Major version (latest build of that major) |
+| `krypton` | LTS codename (latest build of that LTS line) |
 | `lts` | The latest Active LTS release |
 | `current` | The latest Node.js Current release |
 | `latest` | The highest Node.js version published |
+
+Only the Current and Active LTS lines are built. When a line moves to Maintenance LTS (for example, when the next even major enters LTS), its major and codename tags stop receiving updates, so switch to `lts` or the newer major to keep getting security fixes.
 
 `latest` is usually the same image as `current`. When a major version has just entered LTS and the next major has not been released yet, there is no Current release: `latest` follows the new LTS release and `current` stays on the last Current release until the next major ships.
 

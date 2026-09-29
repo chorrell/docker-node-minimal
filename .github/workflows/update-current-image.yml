@@ -50,6 +50,7 @@ jobs:
           fi
 
   build:
+    name: build (${{ matrix.target.version }}, ${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
@@ -157,8 +158,10 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.target.major }}-${{ matrix.platform }}
 
   merge:
+    name: merge (${{ matrix.target.version }})
     needs: [check_version, build]
     strategy:
+      fail-fast: false
       matrix:
         target: ${{ fromJSON(needs.check_version.outputs.TARGETS) }}
     runs-on: ubuntu-latest
@@ -167,7 +170,10 @@ jobs:
       packages: write
       id-token: write
       attestations: write
-    if: needs.check_version.outputs.TARGETS != '[]'
+    # Run even if another target's build failed, so one broken line doesn't
+    # block publishing the other. A target whose build failed has no staging
+    # images, so its merge fails at `imagetools create` instead of publishing.
+    if: ${{ !cancelled() && needs.check_version.result == 'success' && needs.check_version.outputs.TARGETS != '[]' }}
     env:
       NODE_VERSION: ${{ matrix.target.version }}
       TAGS: ${{ join(matrix.target.tags, ' ') }}
