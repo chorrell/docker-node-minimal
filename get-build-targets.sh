@@ -146,43 +146,120 @@ SKIP_VERSIONS_JSON=$(echo "$SKIP_VERSIONS" | jq -R . | jq -s .)
 #   lts        if it is the newest Active LTS release
 #   current    if it is the Current release
 #   latest     if it is the highest version overall
-# shellcheck disable=SC2016 # $vars below are jq variables, not shell
+#
+# Input: the release index, an array of releases, newest first by date, e.g.
+#   [{"version": "v24.21.0", "lts": "Krypton", "date": "...", ...},
+#    {"version": "v26.10.0", "lts": false,     "date": "...", ...}, ...]
+#   `lts` is the LTS codename, or false for releases made before the line
+#   entered LTS (and for odd-numbered majors, which never do).
+#
+# Output: a compact JSON array of build targets, e.g.
+#   [{"version": "24.21.0", "major": "24", "tags": ["24.21.0", "24", "krypton", "lts"]}, ...]
+#
+# jq variables passed in from the shell:
+#   $skip     - SKIP_VERSIONS as a JSON array of strings
+#   $version  - the version given with -n, or "" to auto-detect targets
+#   $schedule - the release schedule, keyed by "v<major>" with an `end` date
+#   $today    - today's date (YYYY-MM-DD), compared against `end`
+TARGETS_FILTER=$(
+  cat << 'JQ'
+# ---- Helpers ---------------------------------------------------------------
+
+# "24.21.0" -> "24"
+def major: split(".")[0];
+
+# "24.21.0" -> [24, 21, 0], so versions compare numerically (and "24.9.0"
+# sorts below "24.10.0", which a plain string comparison gets wrong).
+def semver: split(".") | map(tonumber);
+
+# True if the release's major has not reached its end-of-life date yet.
+# Dates are YYYY-MM-DD, so comparing them as strings works. A major without
+# a schedule entry is assumed to be supported.
+def supported: ($schedule["v" + (.version | major)].end // "9999-12-31") > $today;
+
+# ---- Step 1: Normalize the release index ------------------------------------
+
+# Keep only the fields we need, strip the leading "v" from the version, and
+# drop any version listed in SKIP_VERSIONS.
+[
+  .[]
+  | {version: (.version | ltrimstr("v")), lts}
+  | select(.version | IN($skip[]) | not)
+]
+
+# Sort newest first by semantic version. Everything below relies on this
+# order: "the first match in $all" always means "the newest match".
+| sort_by(.version | semver) | reverse
+
+# ---- Step 2: Name the reference releases ------------------------------------
+
+# $all          - every (non-skipped) release, newest first
+# $latest       - the highest version overall
+# $active_lts   - the newest LTS release; since Active LTS is always the
+#                 newest LTS line, this is the release that gets the `lts` tag
+| . as $all
+| .[0] as $latest
+| (first($all[] | select(.lts != false)) // null) as $active_lts
+
+# ---- Step 3: Compute the tags for a release ---------------------------------
+
+# Called on a single release object. Each clause below adds one tag (or
+# nothing), in the same order as the tag list in the shell comment above.
+# It is defined here, after Step 2, so it can use $all, $latest and $active_lts.
+| def tags:
+    . as $r
+    # <version>: always.
+    | [$r.version]
+    # <major>: if no newer release of the same major exists.
+    + (if first($all[] | select((.version | major) == ($r.version | major))).version == $r.version
+       then [$r.version | major] else [] end)
+    # <codename>: if this is an LTS release and no newer release of the
+    # same LTS line exists. Codenames are lowercased (Krypton -> krypton).
+    + (if $r.lts != false and first($all[] | select(.lts == $r.lts)).version == $r.version
+       then [$r.lts | ascii_downcase] else [] end)
+    # lts: if this is the newest LTS release.
+    + (if $r.version == $active_lts.version then ["lts"] else [] end)
+    # current: if this is the highest version and its line is not LTS yet.
+    + (if $r.version == $latest.version and $r.lts == false then ["current"] else [] end)
+    # latest: if this is the highest version.
+    + (if $r.version == $latest.version then ["latest"] else [] end);
+
+# ---- Step 4: Pick the releases to build -------------------------------------
+
+  if $version != "" then
+    # -n was given: build just that version (empty if it doesn't exist or
+    # is skipped; the shell reports that as an error).
+    [$all[] | select(.version == $version)]
+  else
+    # Otherwise build the highest version overall...
+    [$latest]
+    # ...plus the newest release of each LTS line that is still supported.
+    + [
+        $all
+        | map(select(.lts != false))
+        | group_by(.lts)[]
+        | max_by(.version | semver)
+        | select(supported)
+      ]
+    # $latest may also be the newest release of an LTS line (while no
+    # Current line exists), so drop the duplicate.
+    | unique_by(.version)
+  end
+
+# ---- Step 5: Shape the output -----------------------------------------------
+
+  | map({version, major: (.version | major), tags: tags})
+JQ
+)
+
 SCHEDULE=$(curl -fsSL --compressed "$NODE_SCHEDULE_URL")
 TARGETS=$(curl -fsSL --compressed "$NODE_INDEX_URL" |
-  jq -c --argjson skip "$SKIP_VERSIONS_JSON" --arg version "$VERSION" \
-    --argjson schedule "$SCHEDULE" --arg today "$TODAY" '
-    def major: split(".")[0];
-    # A major without a schedule entry is assumed to be supported.
-    def supported: ($schedule["v" + (.version | major)].end // "9999-12-31") > $today;
-
-    [.[] | {version: (.version | ltrimstr("v")), lts}
-      | select(.version | IN($skip[]) | not)]
-    | sort_by(.version | split(".") | map(tonumber)) | reverse
-    | . as $all
-    | .[0] as $latest
-    | (first($all[] | select(.lts != false)) // null) as $active_lts
-
-    | def tags:
-        . as $r
-        | [$r.version]
-        + (if first($all[] | select((.version | major) == ($r.version | major))).version == $r.version
-           then [$r.version | major] else [] end)
-        + (if $r.lts != false and first($all[] | select(.lts == $r.lts)).version == $r.version
-           then [$r.lts | ascii_downcase] else [] end)
-        + (if $r.version == $active_lts.version then ["lts"] else [] end)
-        + (if $r.version == $latest.version and $r.lts == false then ["current"] else [] end)
-        + (if $r.version == $latest.version then ["latest"] else [] end);
-
-      if $version != "" then
-        [$all[] | select(.version == $version)]
-      else
-        [$latest]
-        + [$all | map(select(.lts != false)) | group_by(.lts)[]
-            | max_by(.version | split(".") | map(tonumber)) | select(supported)]
-        | unique_by(.version)
-      end
-      | map({version, major: (.version | major), tags: tags})
-  ')
+  jq -c \
+    --argjson skip "$SKIP_VERSIONS_JSON" \
+    --arg version "$VERSION" \
+    --argjson schedule "$SCHEDULE" \
+    --arg today "$TODAY" \
+    "$TARGETS_FILTER")
 
 if [[ -n "$VERSION" ]] && [[ "$TARGETS" == "[]" ]]; then
   echo "Error: Node.js version '$VERSION' was not found in the release index or is in SKIP_VERSIONS" >&2
