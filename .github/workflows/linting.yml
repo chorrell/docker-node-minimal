@@ -46,14 +46,6 @@ jobs:
           shellcheck test/*.bats
 
   markdownlint:
-    runs-on: ubuntu-slim
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
-        with:
-          globs: '*.md'
+    uses: chorrell/workflows/.github/workflows/markdownlint.yml@v1
+    with:
+      globs: '*.md'

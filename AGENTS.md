@@ -66,7 +66,7 @@ ENTRYPOINT ["/bin/node"]
 - Runs on all pull requests
 - Validates shell script formatting with shfmt (direct binary, not Docker)
 - Runs shellcheck for shell script linting
-- Runs markdownlint-cli2 for Markdown linting
+- Runs markdownlint-cli2 for Markdown linting (root `*.md` only) via the shared [chorrell/workflows](https://github.com/chorrell/workflows) reusable workflow
 
 ## Scripts
 
