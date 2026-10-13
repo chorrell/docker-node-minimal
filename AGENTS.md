@@ -64,8 +64,7 @@ ENTRYPOINT ["/bin/node"]
 ### linting.yml
 
 - Runs on all pull requests
-- Validates shell script formatting with shfmt (direct binary, not Docker)
-- Runs shellcheck for shell script linting
+- Runs shellcheck and shfmt on every shell file (`*.sh` and `test/*.bats`, found with `shfmt -f .`) via the shared [chorrell/workflows](https://github.com/chorrell/workflows) `shell-lint` workflow
 - Runs markdownlint-cli2 for Markdown linting (root `*.md` only) via the shared [chorrell/workflows](https://github.com/chorrell/workflows) reusable workflow
 
 ## Scripts
