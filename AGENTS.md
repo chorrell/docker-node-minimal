@@ -54,6 +54,7 @@ ENTRYPOINT ["/bin/node"]
 - Resolves build targets (via `get-build-targets.sh`): the latest Current release and the latest release of every supported LTS line, if not yet on Docker Hub, or the provided version
 - Builds each target for both platforms and publishes to Docker Hub and GitHub Container Registry
 - Tags each target with the tags computed by `get-build-targets.sh` (see Versioning)
+- Re-enables itself and `tests.yml` via the GitHub API on every run (`keepalive` job), so GitHub's 60-day inactivity rule doesn't disable the scheduled workflows
 - Signs the compiled Node.js binary and the merged image indexes with GitHub artifact attestations (`actions/attest@v4`, pinned SHA) for GHCR and Docker Hub
 
 ### tests.yml
