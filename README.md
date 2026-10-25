@@ -1,5 +1,8 @@
 # docker-node-minimal
 
+[![Tests](https://github.com/chorrell/docker-node-minimal/actions/workflows/tests.yml/badge.svg)](https://github.com/chorrell/docker-node-minimal/actions/workflows/tests.yml)
+[![Update Image](https://github.com/chorrell/docker-node-minimal/actions/workflows/update-current-image.yml/badge.svg)](https://github.com/chorrell/docker-node-minimal/actions/workflows/update-current-image.yml)
+
 A minimal Docker image with just Node.js.
 
 The image starts from `scratch` and contains only a fully static Node.js binary compiled from source with [build.sh](build.sh). There is no OS, shell, or package manager. Multi-arch manifests are published for `linux/amd64` and `linux/arm64`.
