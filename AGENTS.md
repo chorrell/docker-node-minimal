@@ -98,13 +98,12 @@ Resolves which Node.js versions to build and how to tag them:
 - **Workflow Security:** All workflows under `.github/` must pass a [zizmor](https://docs.zizmor.sh/) audit (`zizmor .github/workflows/`) with no unsuppressed findings before merging
 - **Linting & Formatting:** Enforced via `linting.yml` in CI (shfmt, shellcheck, markdownlint-cli2) and locally via pre-commit hooks
 - **Pre-commit hooks:** `.pre-commit-config.yaml` enforces the following checks locally before commit (some run via Docker, others via native binaries):
-  - `actionlint` - lints GitHub Actions workflow files
   - `gitleaks` - scans for leaked secrets
   - `markdownlint-cli2-docker` on all `.md` files (markdown linting with `.markdownlint.yaml` config)
   - Standard `pre-commit-hooks`: trailing-whitespace, end-of-file-fixer, check-yaml, check-merge-conflict, check-added-large-files, mixed-line-ending
   - `shfmt-docker` on all `.sh` and `.bats` files (auto-formatting with `-sr -i 2 -w -ci` flags)
   - `shellcheck` on all `.sh` and `.bats` files (shell script linting)
-  - `zizmor` - GitHub Actions workflow security audit
+  - `zizmor` - GitHub Actions workflow linter and security audit (actionlint isn't used because it rejects GitHub's `$/` self-repository `uses:` syntax, [rhysd/actionlint#711](https://github.com/rhysd/actionlint/issues/711))
   - See [SETUP.md](./SETUP.md) for detailed installation instructions
   - Quick start: `pre-commit install` then hooks run automatically on commit (requires Docker)
 - **Branch Protection:** main branch requires passing checks and code owner review

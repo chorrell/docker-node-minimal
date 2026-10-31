@@ -6,13 +6,12 @@ This guide explains how to set up the pre-commit hooks for this repository on ma
 
 Pre-commit hooks automatically validate your code before each commit, catching issues early and ensuring consistent code quality. This repository configures the following hooks (some run via Docker, others via native binaries installed by the `pre-commit` framework):
 
-- **actionlint** - Lints GitHub Actions workflow files
 - **gitleaks** - Scans for leaked secrets
 - **markdownlint-cli2** (Docker) - Enforces markdown style guidelines
 - **pre-commit-hooks** - Standard checks: trailing-whitespace, end-of-file-fixer, check-yaml, check-merge-conflict, check-added-large-files, mixed-line-ending
 - **shfmt** (Docker) - Auto-formats shell scripts consistently
 - **shellcheck** - Validates shell script syntax and best practices
-- **zizmor** - Audits GitHub Actions workflows for security issues
+- **zizmor** - Lints and audits GitHub Actions workflows for security issues (actionlint isn't used because it rejects GitHub's `$/` self-repository `uses:` syntax, [rhysd/actionlint#711](https://github.com/rhysd/actionlint/issues/711))
 
 The shfmt and shellcheck checks also run in GitHub Actions (`linting.yml` workflow), so using pre-commit hooks locally saves time by catching issues before pushing.
 
@@ -78,7 +77,6 @@ pre-commit run --all-files
 You should see output like:
 
 ```bash
-Lint GitHub Actions workflow files.......................................Passed
 Detect hardcoded secrets.................................................Passed
 markdownlint-cli2-docker..................................................Passed
 trim trailing whitespace.................................................Passed
@@ -148,11 +146,6 @@ git commit --no-verify
 
 Hooks are defined in `.pre-commit-config.yaml`. Here's what each hook does:
 
-### actionlint
-
-- **Purpose**: Lints GitHub Actions workflow YAML for syntax and logic errors
-- **Files checked**: `.github/workflows/*.yml`
-
 ### gitleaks
 
 - **Purpose**: Scans staged changes for hardcoded secrets and credentials
@@ -164,7 +157,7 @@ Hooks are defined in `.pre-commit-config.yaml`. Here's what each hook does:
 
 ### zizmor
 
-- **Purpose**: Audits GitHub Actions workflows for security issues (e.g. script injection, excessive permissions)
+- **Purpose**: The GitHub Actions workflow linter; audits workflows for security issues (e.g. script injection, excessive permissions)
 - **Files checked**: `.github/workflows/*.yml`
 
 ### shellcheck
@@ -273,7 +266,7 @@ pre-commit run --all-files
 
 ### Slow first run of hooks
 
-Docker container images are large. The first run will pull the required images (shfmt, markdownlint-cli2) and build the other hook environments (actionlint, gitleaks, shellcheck, zizmor), which may take a few minutes.
+Docker container images are large. The first run will pull the required images (shfmt, markdownlint-cli2) and build the other hook environments (gitleaks, shellcheck, zizmor), which may take a few minutes.
 
 **Solution**: Wait for initial pull to complete. Subsequent runs will be faster as images are cached locally.
 
