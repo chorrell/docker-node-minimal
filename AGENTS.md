@@ -105,7 +105,7 @@ Resolves which Node.js versions to build and how to tag them:
   - `shellcheck` on all `.sh` and `.bats` files (shell script linting)
   - `zizmor` - GitHub Actions workflow linter and security audit (actionlint isn't used because it rejects GitHub's `$/` self-repository `uses:` syntax, [rhysd/actionlint#711](https://github.com/rhysd/actionlint/issues/711))
   - See [SETUP.md](./SETUP.md) for detailed installation instructions
-  - Quick start: `pre-commit install` then hooks run automatically on commit (requires Docker)
+  - Quick start: `prek install` then hooks run automatically on commit (requires Docker)
 - **Branch Protection:** main branch requires passing checks and code owner review
 
 ## Testing
