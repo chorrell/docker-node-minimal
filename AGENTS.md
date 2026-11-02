@@ -85,7 +85,7 @@ Compiles Node.js statically:
 Resolves which Node.js versions to build and how to tag them:
 
 - Queries the Node.js distribution API (nodejs.org/dist/index.json)
-- Filters out known broken builds (SKIP_VERSIONS array)
+- Filters out prereleases (e.g. `27.0.0-alpha.0.0.0`) and known broken builds (SKIP_VERSIONS array)
 - Queries the Node.js release schedule (nodejs/Release schedule.json) for end-of-life dates
 - Picks the latest Current release and the latest release of each LTS line that hasn't reached end-of-life, ordered by version (not release date)
 - Checks Docker Hub API to drop targets that are already published (does not count against pull rate limits)
@@ -123,6 +123,7 @@ Bats test suite for get-build-targets.sh:
   - End-of-life LTS lines being dropped
   - `latest` ordering by version, and the gap where no Current release exists
   - SKIP_VERSIONS fallback
+  - Prereleases in the release index being ignored
   - Tags for manually requested versions
 - One integration test runs against the live release index and Docker Hub
 

@@ -180,10 +180,13 @@ def supported: ($schedule["v" + (.version | major)].end // "9999-12-31") > $toda
 # ---- Step 1: Normalize the release index ------------------------------------
 
 # Keep only the fields we need, strip the leading "v" from the version, and
-# drop any version listed in SKIP_VERSIONS.
+# drop any version listed in SKIP_VERSIONS. Prereleases (e.g.
+# "27.0.0-alpha.0.0.0") are dropped too: they aren't builds to publish, and
+# `semver` can't parse them.
 [
   .[]
   | {version: (.version | ltrimstr("v")), lts}
+  | select(.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
   | select(.version | IN($skip[]) | not)
 ]
 

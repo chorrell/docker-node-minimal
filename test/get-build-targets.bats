@@ -142,6 +142,15 @@ tags_for() {
   [ "$(tags_for 22.12.0)" = "22.12.0 22 jod lts" ]
 }
 
+@test "prereleases are ignored" {
+  # 27.0.0-alpha.0.0.0 is the highest version but is not a release to build
+  use_index index-prerelease.json
+  run bash "$SCRIPT" -a
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '[.[].version] | sort | join(" ")' <<< "$output")" = "24.21.0 26.13.0" ]
+  [ "$(tags_for 26.13.0)" = "26.13.0 26 lithium lts latest" ]
+}
+
 @test "output is a compact JSON array with version, major, and tags" {
   use_index index-current.json
   run bash "$SCRIPT" -a
