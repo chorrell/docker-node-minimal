@@ -62,6 +62,14 @@ ENTRYPOINT ["/bin/node"]
 - Runs the Bats test suite on PR changes to `get-build-targets.sh`, `test/`, or the workflow file itself
 - Also runs weekly on schedule (cron: `0 6 * * 1`) and manually via `workflow_dispatch`, so the live integration test catches upstream changes to the Node.js release index or schedule
 
+### Scheduled-run failure alerts
+
+- `update-current-image.yml` and `tests.yml` each end with an `alert` job that calls the shared [chorrell/workflows](https://github.com/chorrell/workflows) `scheduled-failure-issue` workflow
+- When a scheduled run fails (any job's result is `failure`), it opens an issue titled `Scheduled run failing: <workflow name>` assigned to the repository owner, or comments on the one already open
+- The next scheduled run that succeeds closes the issue; PR and `workflow_dispatch` runs never open or close it, so a manual run can't hide a real failure
+- The `alert` job must `needs:` every other job in the workflow (a `check_version` failure leaves `build` and `merge` skipped, not failed), and is the only job with `issues: write`
+- A workflow that fails before any job starts (e.g. invalid YAML) can't reach the `alert` job
+
 ### linting.yml
 
 - Runs on all pull requests

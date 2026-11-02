@@ -269,3 +269,15 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           docker buildx imagetools inspect "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${NODE_VERSION}"
+
+  # Opens an issue when a scheduled run fails and closes it on the next
+  # scheduled success; on manual runs the called job is skipped. It needs
+  # every job, because a check_version failure skips build and merge.
+  alert:
+    needs: [keepalive, check_version, build, merge]
+    if: ${{ !cancelled() }}
+    permissions:
+      issues: write  # open, comment on and close the alert issue
+    uses: chorrell/workflows/.github/workflows/scheduled-failure-issue.yml@v1
+    with:
+      failed: ${{ contains(needs.*.result, 'failure') }}
