@@ -1,0 +1,6 @@
+[
+  {"version": "v27.0.0-alpha.0.0.0", "date": "2026-10-29", "lts": false},
+  {"version": "v26.13.0", "date": "2026-10-28", "lts": "Lithium"},
+  {"version": "v26.12.1", "date": "2026-10-21", "lts": false},
+  {"version": "v24.21.0", "date": "2026-09-07", "lts": "Krypton"}
+]
